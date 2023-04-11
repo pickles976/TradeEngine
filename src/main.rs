@@ -8,7 +8,7 @@ enum OrderKind {
     SELL,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 struct Order {
     kind: OrderKind,
     amount: u32,
@@ -61,7 +61,11 @@ impl Market {
             let orders: &mut Vec<Order> = self.map.get_mut(&item).unwrap();
 
             // transact
-            transact(order, orders);
+            match order.kind {
+                OrderKind::BUY => buy(order, orders), // TODO: pass in transaction history
+                OrderKind::SELL => sell(order, orders),
+            };
+
         }
 
         println!("{:?}", self.map);
@@ -69,15 +73,6 @@ impl Market {
     } 
 
 }
-
-fn transact(order: Order, orders: &mut Vec<Order>){
-
-    match order.kind {
-        OrderKind::BUY => buy(order, orders),
-        OrderKind::SELL => sell(order, orders),
-    };
-
-}  
 
 fn buy(order: Order, orders: &mut Vec<Order>){
 
@@ -145,4 +140,26 @@ fn main() {
     market.place_order(order2);
     market.place_order(order3);
     
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    #[test]
+    fn transact() {
+        let mut market = Market::new();
+
+        let order1 = OrderRequest::new("corn".to_string(), OrderKind::SELL, 100, 2.1);
+        let order2 = OrderRequest::new("corn".to_string(), OrderKind::SELL, 50, 2.5);
+        let order3 = OrderRequest::new("corn".to_string(), OrderKind::BUY, 115, 2.6);
+    
+        market.place_order(order1);
+        market.place_order(order2);
+        market.place_order(order3);
+
+        assert_eq!(vec![Order::new(OrderKind::SELL, 35, 2.5)], *market.map.get("CORN").unwrap());
+    }
+
 }
