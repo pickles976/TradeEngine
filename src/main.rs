@@ -116,6 +116,7 @@ fn buy(order: Order, orders: &mut Vec<Order>, transactions: &mut Vec<Transaction
     let temp_orders: &mut Vec<Order> = orders;
     let mut order = order;
 
+    // low to high
     for i in 0..temp_orders.len() {
         if temp_orders[i].kind == OrderKind::SELL {
             if temp_orders[i].price_per <= order.price_per {
@@ -151,7 +152,8 @@ fn sell(order: Order, orders: &mut Vec<Order>, transactions: &mut Vec<Transactio
     let temp_orders: &mut Vec<Order> = orders;
     let mut order = order;
 
-    for i in 0..temp_orders.len() {
+    // high to low
+    for i in (0..temp_orders.len()).rev() {
         if temp_orders[i].kind == OrderKind::BUY {
             if temp_orders[i].price_per >= order.price_per {
                 let mut amount = 0;
