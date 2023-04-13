@@ -1,3 +1,4 @@
+use std::hash::{Hash, Hasher};
 use std::{collections::HashMap, cmp::Ordering, time::SystemTime};
 use rand::{seq::SliceRandom, Rng}; // 0.7.2
 use std::time::{Duration, Instant};
@@ -35,6 +36,12 @@ impl Order {
             amount: amount,
             price_per: OrderedFloat(price_per),
         }
+    }
+}
+
+impl Hash for Order {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.id.hash(state);
     }
 }
 
@@ -296,7 +303,7 @@ fn main() {
     let items = vec!["APPLES", "BANANAS", "CORN", "DETERGENT", "EGGS", "FROGS", "GRUEL", 
     "HALO_3", "INCENSE", "JUUL", "KNIVES", "LAVA", "MYCELIUM", "NITROGEN", "OVALTINE", "POGS"];
 
-    for _ in 0..300_000 {
+    for _ in 0..1_000_000 {
 
         let user = names.choose(&mut rand::thread_rng()).unwrap().to_string();
         let item = items.choose(&mut rand::thread_rng()).unwrap().to_string();
