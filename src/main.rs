@@ -4,6 +4,7 @@ use std::time::{Duration, Instant};
 use std::collections::BTreeMap;
 use uuid::{uuid, Uuid};
 use ordered_float::OrderedFloat; // 1.0.2
+use sorted_vec::SortedVec;
 
 #[allow(non_snake_case)]
 
@@ -41,6 +42,12 @@ impl PartialEq for Order {
 }
 
 impl Eq for Order {}
+
+impl Ord for Order {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.price_per.cmp(&other.price_per)
+    }
+}
 
 impl PartialOrd for Order {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
@@ -84,14 +91,14 @@ impl Transaction {
 }
 
 struct Market {
-    map: Box<HashMap<String, Vec<Order>>>,
+    map: HashMap<String, Vec<Order>>,
 }
 
 impl Market {
 
     fn new() -> Market {
         Market {
-            map: Box::new(HashMap::new())
+            map: HashMap::new()
         }
     }
 
@@ -106,7 +113,7 @@ impl Market {
         } else {
 
             let orders: &mut Vec<Order> = self.map.get_mut(&item).unwrap();
-            orders.sort_by(|a, b| a.partial_cmp(b).unwrap());
+            // orders.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
             // transact
             match order.kind {
@@ -122,13 +129,13 @@ impl Market {
 }
 
 struct History {
-    map: Box<HashMap<String, Vec<Transaction>>>,
+    map: HashMap<String, Vec<Transaction>>,
 }
 
 impl History {
     fn new() -> History {
         History {
-            map: Box::new(HashMap::new())
+            map: HashMap::new()
         }
     }
 
@@ -181,7 +188,10 @@ fn buy(order: Order, orders: &mut Vec<Order>, transactions: &mut Vec<Transaction
         }
     }
 
-    temp_orders.push(order);
+    let pos = temp_orders.binary_search(&order).unwrap_or_else(|e| e);
+    temp_orders.insert(pos, order);
+
+    // temp_orders.push(order);
     temp_orders.retain(|x| x.amount > 0);
 
 }
@@ -221,7 +231,9 @@ fn sell(order: Order, orders: &mut Vec<Order>, transactions: &mut Vec<Transactio
         }
     }
 
-    temp_orders.push(order);
+    let pos = temp_orders.binary_search(&order).unwrap_or_else(|e| e);
+    temp_orders.insert(pos, order);
+
     temp_orders.retain(|x| x.amount > 0);
 
 }
@@ -267,7 +279,7 @@ fn main() {
     let items = vec!["APPLES", "BANANAS", "CORN", "DETERGENT", "EGGS", "FROGS", "GRUEL", 
     "HALO_3", "INCENSE", "JUUL", "KNIVES", "LAVA", "MYCELIUM", "NITROGEN", "OVALTINE", "POGS"];
 
-    for _ in 0..1_000_000 {
+    for _ in 0..2_000_000 {
 
         let user = names.choose(&mut rand::thread_rng()).unwrap().to_string();
         let item = items.choose(&mut rand::thread_rng()).unwrap().to_string();
