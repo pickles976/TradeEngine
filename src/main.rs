@@ -1,4 +1,7 @@
-use std::{collections::HashMap, cmp::Ordering};
+use std::{collections::HashMap, cmp::Ordering, time::SystemTime};
+use rand::{seq::SliceRandom, Rng}; // 0.7.2
+use std::time::{Duration, Instant};
+use std::collections::BTreeMap;
 
 #[allow(non_snake_case)]
 
@@ -47,17 +50,13 @@ impl OrderRequest {
     }
 }
 
-struct Market {
-    map: Box<HashMap<String, Vec<Order>>>,
-    transactions: Box<Vec<Transaction>>,
-}
-
 #[derive(Debug, PartialEq)]
 struct Transaction {
     buyer: String,
     seller: String,
     amount: u32,
     price_per: f32,
+    time: SystemTime,
 }
 
 impl Transaction {
@@ -66,25 +65,29 @@ impl Transaction {
             buyer: buyer_id,
             seller: seller_id,
             amount: amount,
-            price_per: price_per
+            price_per: price_per,
+            time: SystemTime::now()
         }
     }
+}
+
+struct Market {
+    map: Box<HashMap<String, Vec<Order>>>,
 }
 
 impl Market {
 
     fn new() -> Market {
         Market {
-            map: Box::new(HashMap::new()),
-            transactions: Box::new(vec![]),
+            map: Box::new(HashMap::new())
         }
     }
 
-    // TODO: callback that uses the list of transactions
-    pub fn place_order(&mut self, order_request: OrderRequest) {
+    pub fn place_order(&mut self, order_request: OrderRequest) ->  Vec<Transaction> {
 
         let item = order_request.item;
         let order = order_request.order;
+        let mut transactions: Vec<Transaction> = Vec::new();
 
         if !self.map.contains_key(&item) {
             self.map.insert(item, vec![order]);
@@ -92,23 +95,42 @@ impl Market {
 
             let orders: &mut Vec<Order> = self.map.get_mut(&item).unwrap();
             orders.sort_by(|a, b| a.partial_cmp(b).unwrap());
-            let transactions: &mut Vec<Transaction> = self.transactions.as_mut();
 
             // transact
             match order.kind {
-                OrderKind::BUY => buy(order, orders, transactions),
-                OrderKind::SELL => sell(order, orders, transactions),
+                OrderKind::BUY => buy(order, orders, &mut transactions),
+                OrderKind::SELL => sell(order, orders, &mut transactions),
             };
-
-            // loop over transactions and update customers
-            println!("{:?}", self.transactions);
-
         }
 
-        println!("{:?}", self.map);
+        transactions
 
     } 
 
+}
+
+struct History {
+    map: Box<HashMap<String, Vec<Transaction>>>,
+}
+
+impl History {
+    fn new() -> History {
+        History {
+            map: Box::new(HashMap::new())
+        }
+    }
+
+    pub fn add_transactions(&mut self, item: &String, transactions: Vec<Transaction>) {
+
+        if !self.map.contains_key(item) {
+            self.map.insert(item.to_owned(), transactions);
+            return;
+        }
+
+        let hist: &mut Vec<Transaction> = self.map.get_mut(item).unwrap();
+        hist.extend(transactions);
+        
+    }
 }
 
 fn buy(order: Order, orders: &mut Vec<Order>, transactions: &mut Vec<Transaction>){
@@ -182,41 +204,67 @@ fn sell(order: Order, orders: &mut Vec<Order>, transactions: &mut Vec<Transactio
 
 }
 
-fn main() {
-    
-    let mut market = Market::new();
-
-    let user1 = "BOB_JONES".to_string();
-    let user2 = "ALICE_SHLUMP".to_string();
-
-    let order1 = OrderRequest::new(user1.clone(), "corn".to_string(), OrderKind::SELL, 100, 2.1);
-    let order2 = OrderRequest::new(user1.clone(), "corn".to_string(), OrderKind::SELL, 50, 2.5);
-    let order3 = OrderRequest::new(user2, "corn".to_string(), OrderKind::BUY, 115, 2.6);
-
-    market.place_order(order1);
-    market.place_order(order2);
-    market.place_order(order3);
-    
+struct Exchange {
+    market: Market,
+    history: History
 }
 
-// #[cfg(test)]
-// mod tests {
+impl Exchange {
+    fn new() -> Exchange {
+        Exchange { 
+            market: Market::new(), 
+            history: History::new()
+        }
+    }
 
-//     use super::*;
+    pub fn place_order(&mut self, order_request: OrderRequest) {
+        let item = order_request.item.to_string();
 
-//     #[test]
-//     fn transact() {
-//         let mut market = Market::new();
+        // Place an order on the market
+        let transactions = self.market.place_order(order_request);
 
-//         let order1 = OrderRequest::new("corn".to_string(), OrderKind::SELL, 100, 2.1);
-//         let order2 = OrderRequest::new("corn".to_string(), OrderKind::SELL, 50, 2.5);
-//         let order3 = OrderRequest::new("corn".to_string(), OrderKind::BUY, 115, 2.6);
+        // Update the order history with the transactions
+        self.history.add_transactions(&item, transactions);
+
+        // TODO: return the transations and do something
+    }
+}
+
+fn main() {
+
+    let now = Instant::now();
+
+    let mut exchange = Exchange::new();
     
-//         market.place_order(order1);
-//         market.place_order(order2);
-//         market.place_order(order3);
+    let item = "corn".to_string();
 
-//         assert_eq!(vec![Order::new(OrderKind::SELL, 35, 2.5)], *market.map.get("CORN").unwrap());
-//     }
+    let names = vec!["ALICE", "BOB", "CLYDE", "DOOFUS", "EDGAR", "FRANK", "GOMEZ", 
+    "HASAN", "ISKANDAR", "JOE", "KYLE", "LARRY", "MOE", "NIGEL", "OSACR", "PAUL", "QBERT", 
+    "RON", "SEBASTIAN", "TOM", "ULANBATAAR", "VIKTOR", "WYOMING", "XANDER", "YOLANDE", "ZACHARY"];
 
-// }
+    let items = vec!["APPLES", "BANANAS", "CORN", "DETERGENT", "EGGS", "FROGS", "GRUEL", 
+    "HALO_3", "INCENSE", "JUUL", "KNIVES", "LAVA", "MYCELIUM", "NITROGEN", "OVALTINE", "POGS"];
+
+    for _ in 0..100_000 {
+
+        let user = names.choose(&mut rand::thread_rng()).unwrap().to_string();
+        let item = items.choose(&mut rand::thread_rng()).unwrap().to_string();
+
+        let mut rng = rand::thread_rng();
+        let mut rand = rng.gen_range(0.0..1.0);
+
+        let kind = if rand < 0.5 { OrderKind::BUY } else { OrderKind::SELL };
+
+        let amount = rng.gen_range(1..1000);
+        let price_per = rng.gen_range(1.0..25.0);
+
+        let order = OrderRequest::new(user, item, kind, amount, price_per);
+        exchange.place_order(order);
+
+    }
+
+    // println!("{:?}", exchange.market.map);
+
+    println!("{}", now.elapsed().as_millis());
+    
+}
