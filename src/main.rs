@@ -5,6 +5,7 @@ use std::time::{Duration, Instant};
 use std::collections::BTreeSet;
 use std::ops::Bound::Included;
 use uuid::{uuid, Uuid};
+use wildmatch::WildMatch;
 
 use ordered_float::OrderedFloat; // 1.0.2
 
@@ -16,7 +17,7 @@ enum OrderKind {
     SELL,
 }
 
-#[derive(Debug, Clone, Eq)]
+#[derive(Debug, Clone)]
 struct Order {
     id: Uuid,
     user_id: String,
@@ -42,6 +43,9 @@ impl PartialEq for Order {
         self.id == other.id
     }
 }
+
+impl Eq for Order {}
+
 impl PartialOrd for Order {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         self.price_per.partial_cmp(&other.price_per)
@@ -116,8 +120,7 @@ impl Market {
             // transact
             match order.kind {
                 OrderKind::BUY => buy(order, orders, &mut transactions),
-                _ => {}
-                // OrderKind::SELL => sell(order, orders, &mut transactions),
+                OrderKind::SELL => sell(order, orders, &mut transactions),
             };
         }
 
@@ -153,89 +156,105 @@ impl History {
 
 fn buy(order: Order, orders: &mut BTreeSet<Order>, transactions: &mut Vec<Transaction>){
 
-    let order_price = order.price_per;
     let id = order.user_id.clone();
     let mut order = order;
 
     let zero = Order::new("".to_string(), OrderKind::BUY, 0, 0.0);
 
-    let mut to_remove: Vec<Order> = vec![];
     let mut to_update: Vec<Order> = vec![];
 
     for listing in orders.range((Included(zero), Included(order.clone()))) {
-        println!("{:?}", listing);
 
-        if order.amount <= 0 { break; }
+        if order.amount < 1 { break; }
 
         if listing.kind == OrderKind::SELL {
 
             let mut temp_listing = listing.clone();
 
-            if listing.price_per <= order_price {
-                let amount;
-                if listing.amount > order.amount {
-                    amount = order.amount;
-                    temp_listing.amount -= order.amount;
-                    order.amount = 0;
-                } else if listing.amount < order.amount {
-                    amount = listing.amount;
-                    order.amount -= listing.amount;
-                    temp_listing.amount = 0;
-                } else {
-                    amount = order.amount;
-                    temp_listing.amount = 0;
-                    order.amount = 0;
-                }
-
-                let transaction = Transaction::new(id.clone(), listing.user_id.clone(), amount, listing.price_per);
-                transactions.push(transaction);
-                if temp_listing.amount == 0 { to_remove.push(temp_listing); }
+            let amount;
+            if listing.amount > order.amount {
+                amount = order.amount;
+                temp_listing.amount -= order.amount;
+                order.amount = 0;
+            } else if listing.amount < order.amount {
+                amount = listing.amount;
+                order.amount -= listing.amount;
+                temp_listing.amount = 0;
+            } else {
+                amount = order.amount;
+                temp_listing.amount = 0;
+                order.amount = 0;
             }
+
+            let transaction = Transaction::new(id.clone(), listing.user_id.clone(), amount, listing.price_per);
+            transactions.push(transaction);
+
+            to_update.push(temp_listing);
         }
     }
 
     if order.amount > 0 { orders.insert(order); } // insert the order if it still hasn't been fulfilled
 
-    for i in 0..to_remove.len() {
-        orders.remove(&to_remove[i]);
+    for i in 0..to_update.len() {
+        if to_update[i].amount > 0 {
+            orders.replace(to_update[i].clone());
+        } else {
+            orders.remove(&to_update[i]);
+        }
     }
 
 }
 
-// fn sell(order: Order, orders: &mut BTreeSet<Order>, transactions: &mut Vec<Transaction>){
+fn sell(order: Order, orders: &mut BTreeSet<Order>, transactions: &mut Vec<Transaction>){
 
-//     let temp_orders: &mut Vec<Order> = orders;
-//     let mut order = order;
+    let id = order.user_id.clone();
+    let mut order = order;
 
-//     // high to low
-//     for i in (0..temp_orders.len()).rev() {
-//         if temp_orders[i].kind == OrderKind::BUY {
-//             if temp_orders[i].price_per >= order.price_per {
-//                 let mut amount = 0;
-//                 if temp_orders[i].amount > order.amount {
-//                     amount = order.amount;
-//                     temp_orders[i].amount -= order.amount;
-//                     order.amount = 0;
-//                 } else if temp_orders[i].amount < order.amount {
-//                     amount = temp_orders[i].amount;
-//                     order.amount -= temp_orders[i].amount;
-//                     temp_orders[i].amount = 0;
-//                 } else {
-//                     amount = order.amount;
-//                     temp_orders[i].amount = 0;
-//                     order.amount = 0;
-//                 }
+    let max = Order::new("".to_string(), OrderKind::BUY, 0, f32::MAX);
 
-//                 let transaction = Transaction::new(order.user_id.clone(), temp_orders[i].user_id.clone(), amount, temp_orders[i].price_per);
-//                 transactions.push(transaction);
-//             }
-//         }
-//     }
+    let mut to_update: Vec<Order> = vec![];
 
-//     temp_orders.push(order);
-//     temp_orders.retain(|x| x.amount > 0);
+    for listing in orders.range((Included(order.clone()), Included(max))).rev() {
 
-// }
+        if order.amount < 1 { break; }
+
+        if listing.kind == OrderKind::BUY {
+
+            let mut temp_listing = listing.clone();
+
+            let amount;
+            if listing.amount > order.amount {
+                amount = order.amount;
+                temp_listing.amount -= order.amount;
+                order.amount = 0;
+            } else if listing.amount < order.amount {
+                amount = listing.amount;
+                order.amount -= listing.amount;
+                temp_listing.amount = 0;
+            } else {
+                amount = order.amount;
+                temp_listing.amount = 0;
+                order.amount = 0;
+            }
+
+            let transaction = Transaction::new(id.clone(), listing.user_id.clone(), amount, listing.price_per);
+            transactions.push(transaction);
+
+            to_update.push(temp_listing);
+        }
+    }
+
+    if order.amount > 0 { orders.insert(order); } // insert the order if it still hasn't been fulfilled
+
+    for i in 0..to_update.len() {
+        if to_update[i].amount > 0 {
+            orders.replace(to_update[i].clone());
+        } else {
+            orders.remove(&to_update[i]);
+        }
+    }
+
+}
 
 struct Exchange {
     market: Market,
@@ -251,6 +270,7 @@ impl Exchange {
     }
 
     pub fn place_order(&mut self, order_request: OrderRequest) {
+
         let item = order_request.item.to_string();
 
         // Place an order on the market
@@ -264,48 +284,68 @@ impl Exchange {
 }
 
 fn main() {
+        
+    let now = Instant::now();
+
     let mut exchange = Exchange::new();
 
-    let order1 = OrderRequest::new("BOB".to_string(), "CORN".to_string(), OrderKind::BUY, 32, 12.0);
-    let order2 = OrderRequest::new("ALICE".to_string(), "CORN".to_string(),OrderKind::BUY, 12, 14.0);
-    let order3 = OrderRequest::new("CAROL".to_string(), "CORN".to_string(),OrderKind::BUY, 32, 10.0);
+    let names = vec!["ALICE", "BOB", "CLYDE", "DOOFUS", "EDGAR", "FRANK", "GOMEZ", 
+    "HASAN", "ISKANDAR", "JOE", "KYLE", "LARRY", "MOE", "NIGEL", "OSACR", "PAUL", "QBERT", 
+    "RON", "SEBASTIAN", "TOM", "ULANBATAAR", "VIKTOR", "WYOMING", "XANDER", "YOLANDE", "ZACHARY"];
 
-    exchange.place_order(order1);
-    exchange.place_order(order2);
-    exchange.place_order(order3);
+    let items = vec!["APPLES", "BANANAS", "CORN", "DETERGENT", "EGGS", "FROGS", "GRUEL", 
+    "HALO_3", "INCENSE", "JUUL", "KNIVES", "LAVA", "MYCELIUM", "NITROGEN", "OVALTINE", "POGS"];
+
+    for _ in 0..1_000_000 {
+
+        let user = names.choose(&mut rand::thread_rng()).unwrap().to_string();
+        let item = items.choose(&mut rand::thread_rng()).unwrap().to_string();
+
+        let mut rng = rand::thread_rng();
+        let mut rand = rng.gen_range(0.0..1.0);
+
+        let kind = if rand < 0.5 { OrderKind::BUY } else { OrderKind::SELL };
+
+        let amount = rng.gen_range(1..1000);
+        let price_per = rng.gen_range(1.0..25.0);
+
+        let order = OrderRequest::new(user, item, kind, amount, price_per);
+        exchange.place_order(order);
+
+    }
+
+    
+    println!("{}", now.elapsed().as_millis());
+
 }
 
-// let now = Instant::now();
 
-// let mut exchange = Exchange::new();
+#[cfg(test)]
+mod tests {
 
-// let item = "corn".to_string();
+    use super::*;
 
-// let names = vec!["ALICE", "BOB", "CLYDE", "DOOFUS", "EDGAR", "FRANK", "GOMEZ", 
-// "HASAN", "ISKANDAR", "JOE", "KYLE", "LARRY", "MOE", "NIGEL", "OSACR", "PAUL", "QBERT", 
-// "RON", "SEBASTIAN", "TOM", "ULANBATAAR", "VIKTOR", "WYOMING", "XANDER", "YOLANDE", "ZACHARY"];
+    #[test]
+    fn test_buy_and_sell() {
 
-// let items = vec!["APPLES", "BANANAS", "CORN", "DETERGENT", "EGGS", "FROGS", "GRUEL", 
-// "HALO_3", "INCENSE", "JUUL", "KNIVES", "LAVA", "MYCELIUM", "NITROGEN", "OVALTINE", "POGS"];
+        let mut exchange = Exchange::new();
 
-// for _ in 0..100_000 {
+        let order1 = OrderRequest::new("BOB".to_string(), "CORN".to_string(), OrderKind::BUY, 32, 12.0);
+        let order2 = OrderRequest::new("ALICE".to_string(), "CORN".to_string(),OrderKind::BUY, 12, 14.0);
+        let order3 = OrderRequest::new("CAROL".to_string(), "CORN".to_string(),OrderKind::SELL, 20, 10.0);
+        let order4 = OrderRequest::new("CAROL".to_string(), "CORN".to_string(),OrderKind::SELL, 14, 15.0);
+    
+        exchange.place_order(order1);
+        exchange.place_order(order2);
+        exchange.place_order(order3);
+        exchange.place_order(order4);
+    
 
-//     let user = names.choose(&mut rand::thread_rng()).unwrap().to_string();
-//     let item = items.choose(&mut rand::thread_rng()).unwrap().to_string();
+        let btree = exchange.market.map.get("CORN").unwrap();
 
-//     let mut rng = rand::thread_rng();
-//     let mut rand = rng.gen_range(0.0..1.0);
+        let test_str = "{Order { id: *, user_id: \"BOB\", kind: BUY, amount: 24, price_per: OrderedFloat(12.0) }, Order { id: *, user_id: \"CAROL\", kind: SELL, amount: 14, price_per: OrderedFloat(15.0) }}";
 
-//     let kind = if rand < 0.5 { OrderKind::BUY } else { OrderKind::SELL };
+        assert!(WildMatch::new(test_str).matches(format!("{:?}", btree).as_str()));
 
-//     let amount = rng.gen_range(1..1000);
-//     let price_per = rng.gen_range(1.0..25.0);
-
-//     let order = OrderRequest::new(user, item, kind, amount, price_per);
-//     exchange.place_order(order);
-
-// }
-
-// // println!("{:?}", exchange.market.map);
-
-// println!("{}", now.elapsed().as_millis());
+    }
+}
