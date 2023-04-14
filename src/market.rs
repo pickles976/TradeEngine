@@ -146,21 +146,19 @@ impl Market {
 
     } 
 
-    pub fn cancel_order(&mut self, order_request: OrderRequest) -> Option<Order> {
-
-        let item = order_request.item;
+    pub fn cancel_order(&mut self, item: String, order: Order) -> Option<Order> {
 
         let ledger = &mut self.map.get_mut(&item).unwrap();
 
         let orders: &mut Vec<Order>;
 
-        match order_request.order.kind {
+        match order.kind {
             OrderKind::BUY => orders = &mut ledger.buy_orders,
             OrderKind::SELL => orders = &mut ledger.sell_orders,
         };
 
         for i in 0..ledger.buy_orders.len() {
-            if ledger.buy_orders[i].id == order_request.order.id {
+            if ledger.buy_orders[i].id == order.id {
                 return Some(ledger.buy_orders.remove(i));
             }
         }

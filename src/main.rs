@@ -167,19 +167,35 @@ mod tests {
 
         let mut exchange = Market::new();
 
-        // let order1 = OrderRequest::new("BOB".to_string(), "CORN".to_string(), OrderKind::BUY, 12, 14.0);
+        let order1 = OrderRequest::new("BOB".to_string(), "CORN".to_string(), OrderKind::BUY, 12, 14.0);
+    
+        let summary = exchange.place_order(order1);
+        let order = summary.created.unwrap();
+        let item = summary.key;
+
+        exchange.cancel_order(item.clone(), order);
+
+        assert_eq!(exchange.map.get(&item).unwrap().buy_orders.len(), 0);
+
+    }
+
+    #[test]
+    fn test_cancel_partial() {
+
+        let mut exchange = Market::new();
 
         let order1 = OrderRequest::new("BOB".to_string(), "CORN".to_string(), OrderKind::BUY, 12, 14.0);
-        let order2 = OrderRequest::new("ALICE".to_string(), "CORN".to_string(),OrderKind::SELL, 32, 12.0);
+        let order2 = OrderRequest::new("ALICE".to_string(), "CORN".to_string(), OrderKind::SELL, 6, 12.0);
     
-        // let summary = exchange.place_order(order1);
-        let summary = exchange.place_order(order1);
-        exchange.place_order(order2);
+        exchange.place_order(order1);
+        let summary = exchange.place_order(order2);
 
-        println!("{:?}", summary);
-        println!("{:?}", exchange.map);
+        let order = summary.to_update[0].clone();
+        let item = summary.key;
 
-        // assert_eq!(price, 12.0);
+        exchange.cancel_order(item.clone(), order);
+
+        assert_eq!(exchange.map.get(&item).unwrap().buy_orders.len(), 0);
 
     }
 
