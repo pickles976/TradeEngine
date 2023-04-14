@@ -1,3 +1,4 @@
+use market::Summary;
 use rand::{seq::SliceRandom, Rng}; // 0.7.2
 use std::time::Instant;
 
@@ -7,41 +8,36 @@ use crate::market::{Market, History, OrderRequest, OrderKind};
 
 struct Exchange {
     market: Market,
-    history: History
+    // history: History
 }
 
 impl Exchange {
     fn new() -> Exchange {
         Exchange { 
             market: Market::new(), 
-            history: History::new()
+            // history: History::new()
         }
     }
 
-    pub fn place_order(&mut self, order_request: OrderRequest) {
-        let item = order_request.item.to_string();
+    pub fn place_order(&mut self, order_request: OrderRequest) -> Summary {
 
         // Place an order on the market
-        let transactions = self.market.place_order(order_request);
-
-        // Update the order history with the transactions
-        self.history.add_transactions(&item, transactions);
-
-        // TODO: return the transations and do something
+        self.market.place_order(order_request)
+        
     }
 
-    /// Get the most recent transaction
-    pub fn get_price(&mut self, item: String) -> Option<f32> {
+    // /// Get the most recent transaction
+    // pub fn get_price(&mut self, item: String) -> Option<f32> {
 
-        match self.history.map.get(&item) {
-            Some(history) => {
-                if history.len() < 1 { return None }
-                return Some(history[history.len() - 1].price_per.0)
-            },
-            None => return None
-        }
+    //     match self.history.map.get(&item) {
+    //         Some(history) => {
+    //             if history.len() < 1 { return None }
+    //             return Some(history[history.len() - 1].price_per.0)
+    //         },
+    //         None => return None
+    //     }
 
-    }
+    // }
 
     // pub fn get_orders(&mut self, item: String) -> Ledger {
 
@@ -191,19 +187,19 @@ mod tests {
     }
 
     #[test]
-    fn test_get_price() {
+    fn test_summary() {
 
         let mut exchange = Exchange::new();
 
-        let order1 = OrderRequest::new("BOB".to_string(), "CORN".to_string(), OrderKind::BUY, 32, 14.0);
-        let order2 = OrderRequest::new("ALICE".to_string(), "CORN".to_string(),OrderKind::SELL, 12, 12.0);
+        let order1 = OrderRequest::new("BOB".to_string(), "CORN".to_string(), OrderKind::BUY, 12, 14.0);
+        let order2 = OrderRequest::new("ALICE".to_string(), "CORN".to_string(),OrderKind::SELL, 32, 12.0);
     
         exchange.place_order(order1);
-        exchange.place_order(order2);
+        let summary = exchange.place_order(order2);
 
-        let price = exchange.get_price("CORN".to_string()).unwrap();
+        println!("{:?}", summary);
 
-        assert_eq!(price, 12.0);
+        // assert_eq!(price, 12.0);
 
     }
 

@@ -103,6 +103,7 @@ impl Ledger {
     }
 }
 
+/// Market and History make up an exchange
 pub struct Market {
     pub map: HashMap<String, Ledger>,
 }
@@ -115,11 +116,12 @@ impl Market {
         }
     }
 
-    pub fn place_order(&mut self, order_request: OrderRequest) ->  Vec<Transaction> {
+    pub fn place_order(&mut self, order_request: OrderRequest) ->  Summary {
 
         let item = order_request.item;
         let order = order_request.order;
-        let mut transactions: Vec<Transaction> = Vec::new();
+
+        let mut summary: Summary = Summary::new(item.clone());
 
         if !self.map.contains_key(&item) { // insert into ledger
             let mut ledger = Ledger::new();
@@ -131,22 +133,41 @@ impl Market {
         } else { // update ledger
 
             let ledger = &mut self.map.get_mut(&item).unwrap();
-            let buy_orders: &mut Vec<Order> = &mut ledger.buy_orders;
-            let sell_orders: &mut Vec<Order> = &mut ledger.sell_orders;
 
             // transact
             match order.kind {
-                OrderKind::BUY => buy(order, buy_orders, sell_orders, &mut transactions),
-                OrderKind::SELL => sell(order, buy_orders, sell_orders, &mut transactions),
+                OrderKind::BUY => buy(order, ledger, &mut summary),
+                OrderKind::SELL => sell(order, ledger, &mut summary),
             };
         }
 
-        transactions
+        summary
 
     } 
 
 }
 
+/// Summary of what occured
+#[derive(Debug, PartialEq)]
+pub struct Summary {
+    pub key: String,
+    pub transactions: Vec<Transaction>,
+    pub to_update: Vec<Order>,
+    pub created: Option<Order>
+}
+
+impl Summary {
+    pub fn new(key: String) -> Summary {
+        Summary {
+            key: key,
+            transactions: vec![],
+            to_update: vec![],
+            created: None
+        }
+    }
+}
+
+/// Long-term history should be swapped out for something that you can plug in, like Cassandra or something
 pub struct History {
     pub map: HashMap<String, Vec<Transaction>>,
 }
@@ -171,7 +192,10 @@ impl History {
     }
 }
 
-fn buy(order: Order, buy_orders: &mut Vec<Order>, sell_orders: &mut Vec<Order>, transactions: &mut Vec<Transaction>) {
+fn buy(order: Order, ledger: &mut Ledger, summary: &mut Summary) {
+
+    let buy_orders: &mut Vec<Order> = &mut ledger.buy_orders;
+    let sell_orders: &mut Vec<Order> = &mut ledger.sell_orders;
 
     let mut order = order;
     let end = sell_orders.binary_search(&order).unwrap_or_else(|e| e);
@@ -198,7 +222,8 @@ fn buy(order: Order, buy_orders: &mut Vec<Order>, sell_orders: &mut Vec<Order>, 
             }
 
             let transaction = Transaction::new(order.user_id.clone(), sell_orders[i].user_id.clone(), amount, sell_orders[i].price_per);
-            transactions.push(transaction);
+            summary.transactions.push(transaction);
+            summary.to_update.push(sell_orders[i].clone());
 
         } else {
             break;
@@ -211,12 +236,16 @@ fn buy(order: Order, buy_orders: &mut Vec<Order>, sell_orders: &mut Vec<Order>, 
 
     // Add our buy order to the buy ledger
     let pos = buy_orders.binary_search(&order).unwrap_or_else(|e| e);
-    buy_orders.insert(pos, order);
+    buy_orders.insert(pos, order.clone());
+    summary.created = Some(order);
 
 
 }
 
-fn sell(order: Order, buy_orders: &mut Vec<Order>, sell_orders: &mut Vec<Order>, transactions: &mut Vec<Transaction>) {
+fn sell(order: Order, ledger: &mut Ledger, summary: &mut Summary) {
+
+    let buy_orders: &mut Vec<Order> = &mut ledger.buy_orders;
+    let sell_orders: &mut Vec<Order> = &mut ledger.sell_orders;
 
     let mut order = order;
     let end = buy_orders.binary_search(&order).unwrap_or_else(|e| e);
@@ -243,7 +272,8 @@ fn sell(order: Order, buy_orders: &mut Vec<Order>, sell_orders: &mut Vec<Order>,
             }
 
             let transaction = Transaction::new(order.user_id.clone(), buy_orders[i].user_id.clone(), amount, order.price_per);
-            transactions.push(transaction);
+            summary.transactions.push(transaction);
+            summary.to_update.push(buy_orders[i].clone());
             
         } else {
             break;
@@ -257,6 +287,7 @@ fn sell(order: Order, buy_orders: &mut Vec<Order>, sell_orders: &mut Vec<Order>,
 
     // Add our buy order to the buy ledger
     let pos = sell_orders.binary_search(&order).unwrap_or_else(|e| e);
-    sell_orders.insert(pos, order);
+    sell_orders.insert(pos, order.clone());
+    summary.created = Some(order);
 
 }
