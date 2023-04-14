@@ -88,8 +88,23 @@ impl Transaction {
     }
 }
 
+#[derive(Debug, PartialEq)]
+struct Ledger {
+    buy_orders: Vec<Order>,
+    sell_orders: Vec<Order>,
+}
+
+impl Ledger {
+    fn new() -> Ledger {
+        Ledger {
+            buy_orders: vec![],
+            sell_orders: vec![]
+        }
+    }
+}
+
 struct Market {
-    map: HashMap<String, Vec<Order>>,
+    map: HashMap<String, Ledger>,
 }
 
 impl Market {
@@ -106,16 +121,23 @@ impl Market {
         let order = order_request.order;
         let mut transactions: Vec<Transaction> = Vec::new();
 
-        if !self.map.contains_key(&item) {
-            self.map.insert(item, vec![order]);
-        } else {
+        if !self.map.contains_key(&item) { // insert into ledger
+            let mut ledger = Ledger::new();
+            match order.kind {
+                OrderKind::BUY => ledger.buy_orders.push(order),
+                OrderKind::SELL => ledger.sell_orders.push(order),
+            }
+            self.map.insert(item, ledger);
+        } else { // update ledger
 
-            let orders: &mut Vec<Order> = self.map.get_mut(&item).unwrap();
+            let ledger = &mut self.map.get_mut(&item).unwrap();
+            let buy_orders: &mut Vec<Order> = &mut ledger.buy_orders;
+            let sell_orders: &mut Vec<Order> = &mut ledger.sell_orders;
 
             // transact
             match order.kind {
-                OrderKind::BUY => buy(order, orders, &mut transactions),
-                OrderKind::SELL => sell(order, orders, &mut transactions),
+                OrderKind::BUY => buy(order, buy_orders, sell_orders, &mut transactions),
+                OrderKind::SELL => sell(order, buy_orders, sell_orders, &mut transactions),
             };
         }
 
@@ -149,93 +171,93 @@ impl History {
     }
 }
 
-fn buy(order: Order, orders: &mut Vec<Order>, transactions: &mut Vec<Transaction>){
+fn buy(order: Order, buy_orders: &mut Vec<Order>, sell_orders: &mut Vec<Order>, transactions: &mut Vec<Transaction>) {
 
-    let temp_orders: &mut Vec<Order> = orders;
     let mut order = order;
-
-    let end = temp_orders.binary_search(&order).unwrap_or_else(|e| e);
+    let end = sell_orders.binary_search(&order).unwrap_or_else(|e| e);
 
     // low to high
     for i in 0..end {
 
         if order.amount < 1 {break;}
 
-        if temp_orders[i].kind == OrderKind::SELL {
-            if temp_orders[i].price_per <= order.price_per {
-                let mut amount = 0;
-                if temp_orders[i].amount > order.amount {
-                    amount = order.amount;
-                    temp_orders[i].amount -= order.amount;
-                    order.amount = 0;
-                } else if temp_orders[i].amount < order.amount {
-                    amount = temp_orders[i].amount;
-                    order.amount -= temp_orders[i].amount;
-                    temp_orders[i].amount = 0;
-                } else {
-                    amount = order.amount;
-                    temp_orders[i].amount = 0;
-                    order.amount = 0;
-                }
-
-                let transaction = Transaction::new(order.user_id.clone(), temp_orders[i].user_id.clone(), amount, temp_orders[i].price_per);
-                transactions.push(transaction);
-
+        if sell_orders[i].price_per <= order.price_per {
+            let amount;
+            if sell_orders[i].amount > order.amount {
+                amount = order.amount;
+                sell_orders[i].amount -= order.amount;
+                order.amount = 0;
+            } else if sell_orders[i].amount < order.amount {
+                amount = sell_orders[i].amount;
+                order.amount -= sell_orders[i].amount;
+                sell_orders[i].amount = 0;
             } else {
-                break;
+                amount = order.amount;
+                sell_orders[i].amount = 0;
+                order.amount = 0;
             }
+
+            let transaction = Transaction::new(order.user_id.clone(), sell_orders[i].user_id.clone(), amount, sell_orders[i].price_per);
+            transactions.push(transaction);
+
+        } else {
+            break;
         }
     }
 
-    let pos = temp_orders.binary_search(&order).unwrap_or_else(|e| e);
-    temp_orders.insert(pos, order);
+    sell_orders.retain(|x| x.amount > 0);
 
-    // temp_orders.push(order);
-    temp_orders.retain(|x| x.amount > 0);
+    if order.amount < 1 { return }
+
+    // Add our buy order to the buy ledger
+    let pos = buy_orders.binary_search(&order).unwrap_or_else(|e| e);
+    buy_orders.insert(pos, order);
+
 
 }
 
-fn sell(order: Order, orders: &mut Vec<Order>, transactions: &mut Vec<Transaction>){
+fn sell(order: Order, buy_orders: &mut Vec<Order>, sell_orders: &mut Vec<Order>, transactions: &mut Vec<Transaction>) {
 
-    let temp_orders: &mut Vec<Order> = orders;
     let mut order = order;
-
-    let end = temp_orders.binary_search(&order).unwrap_or_else(|e| e);
+    let end = buy_orders.binary_search(&order).unwrap_or_else(|e| e);
 
     // high to low
-    for i in (end..temp_orders.len()).rev() {
+    for i in (end..buy_orders.len()).rev() {
 
         if order.amount < 1 {break;}
 
-        if temp_orders[i].kind == OrderKind::BUY {
-            if temp_orders[i].price_per >= order.price_per {
-                let mut amount = 0;
-                if temp_orders[i].amount > order.amount {
-                    amount = order.amount;
-                    temp_orders[i].amount -= order.amount;
-                    order.amount = 0;
-                } else if temp_orders[i].amount < order.amount {
-                    amount = temp_orders[i].amount;
-                    order.amount -= temp_orders[i].amount;
-                    temp_orders[i].amount = 0;
-                } else {
-                    amount = order.amount;
-                    temp_orders[i].amount = 0;
-                    order.amount = 0;
-                }
-
-                let transaction = Transaction::new(order.user_id.clone(), temp_orders[i].user_id.clone(), amount, temp_orders[i].price_per);
-                transactions.push(transaction);
+        if buy_orders[i].price_per >= order.price_per {
+            let amount;
+            if buy_orders[i].amount > order.amount {
+                amount = order.amount;
+                buy_orders[i].amount -= order.amount;
+                order.amount = 0;
+            } else if buy_orders[i].amount < order.amount {
+                amount = buy_orders[i].amount;
+                order.amount -= buy_orders[i].amount;
+                buy_orders[i].amount = 0;
             } else {
-                break;
+                amount = order.amount;
+                buy_orders[i].amount = 0;
+                order.amount = 0;
             }
+
+            let transaction = Transaction::new(order.user_id.clone(), buy_orders[i].user_id.clone(), amount, buy_orders[i].price_per);
+            transactions.push(transaction);
+            
+        } else {
+            break;
         }
+
     }
 
-    let pos = temp_orders.binary_search(&order).unwrap_or_else(|e| e);
-    temp_orders.insert(pos, order);
+    buy_orders.retain(|x| x.amount > 0);
 
-    temp_orders.retain(|x| x.amount > 0);
+    if order.amount < 1 { return }
+
+    // Add our buy order to the buy ledger
+    let pos = sell_orders.binary_search(&order).unwrap_or_else(|e| e);
+    sell_orders.insert(pos, order);
 
 }
 
@@ -286,7 +308,7 @@ fn main() {
         let item = items.choose(&mut rand::thread_rng()).unwrap().to_string();
 
         let mut rng = rand::thread_rng();
-        let mut rand = rng.gen_range(0.0..1.0);
+        let rand = rng.gen_range(0.0..1.0);
 
         let kind = if rand < 0.5 { OrderKind::BUY } else { OrderKind::SELL };
 
@@ -298,8 +320,6 @@ fn main() {
 
     }
 
-    // println!("{:?}", exchange.market.map);
-
     println!("{}", now.elapsed().as_millis());
     
 }
@@ -309,6 +329,44 @@ mod tests {
 
     use super::*;
     use wildmatch::WildMatch;
+
+    #[test]
+    fn test_buy() {
+
+        let mut exchange = Exchange::new();
+
+        let order1 = OrderRequest::new("BOB".to_string(), "CORN".to_string(), OrderKind::BUY, 32, 12.0);
+        let order2 = OrderRequest::new("ALICE".to_string(), "CORN".to_string(),OrderKind::BUY, 12, 14.0);
+    
+        exchange.place_order(order1);
+        exchange.place_order(order2);
+
+        let buy_orders = &exchange.market.map.get("CORN").unwrap().buy_orders;
+
+        let test_str = "[Order { id: *, user_id: \"BOB\", kind: BUY, amount: 32, price_per: OrderedFloat(12.0) }, Order { id: *, user_id: \"ALICE\", kind: BUY, amount: 12, price_per: OrderedFloat(14.0) }]";
+
+        assert!(WildMatch::new(test_str).matches(format!("{:?}", buy_orders).as_str()));
+
+    }
+
+    #[test]
+    fn test_sell() {
+
+        let mut exchange = Exchange::new();
+
+        let order1 = OrderRequest::new("CAROL".to_string(), "CORN".to_string(),OrderKind::SELL, 20, 10.0);
+        let order2 = OrderRequest::new("CAROL".to_string(), "CORN".to_string(),OrderKind::SELL, 14, 15.0);
+    
+        exchange.place_order(order1);
+        exchange.place_order(order2);
+
+        let sell_orders = &exchange.market.map.get("CORN").unwrap().sell_orders;
+
+        let test_str = "[Order { id: *, user_id: \"CAROL\", kind: SELL, amount: 20, price_per: OrderedFloat(10.0) }, Order { id: *, user_id: \"CAROL\", kind: SELL, amount: 14, price_per: OrderedFloat(15.0) }]";
+
+        assert!(WildMatch::new(test_str).matches(format!("{:?}", sell_orders).as_str()));
+
+    }
 
     #[test]
     fn test_buy_and_sell() {
@@ -325,14 +383,16 @@ mod tests {
         exchange.place_order(order3);
         exchange.place_order(order4);
 
+        let ledger = exchange.market.map.get("CORN").unwrap();
 
-        println!("{:?}", exchange.market.map.get("CORN").unwrap());
+        let buy_orders = &ledger.buy_orders;
+        let sell_orders = &ledger.sell_orders;
 
-        let btree = exchange.market.map.get("CORN").unwrap();
+        let buy_str = "[Order { id: *, user_id: \"BOB\", kind: BUY, amount: 24, price_per: OrderedFloat(12.0) }]";
+        let sell_str = "[Order { id: *, user_id: \"CAROL\", kind: SELL, amount: 14, price_per: OrderedFloat(15.0) }]";
 
-        let test_str = "[Order { id: *, user_id: \"BOB\", kind: BUY, amount: 24, price_per: OrderedFloat(12.0) }, Order { id: *, user_id: \"CAROL\", kind: SELL, amount: 14, price_per: OrderedFloat(15.0) }]";
-
-        assert!(WildMatch::new(test_str).matches(format!("{:?}", btree).as_str()));
+        assert!(WildMatch::new(buy_str).matches(format!("{:?}", buy_orders).as_str()));
+        assert!(WildMatch::new(sell_str).matches(format!("{:?}", sell_orders).as_str()));
 
     }
 
@@ -353,14 +413,16 @@ mod tests {
         exchange.place_order(order4);
         exchange.place_order(order5);
 
+        let ledger = exchange.market.map.get("CORN").unwrap();
 
-        println!("{:?}", exchange.market.map.get("CORN").unwrap());
+        let buy_orders = &ledger.buy_orders;
+        let sell_orders = &ledger.sell_orders;
 
-        let btree = exchange.market.map.get("CORN").unwrap();
+        let buy_str = "[Order { id: *, user_id: \"BOB\", kind: BUY, amount: 24, price_per: OrderedFloat(12.0) }]";
+        let sell_str = "[]";
 
-        let test_str = "[Order { id: *, user_id: \"BOB\", kind: BUY, amount: 24, price_per: OrderedFloat(12.0) }]";
-
-        assert!(WildMatch::new(test_str).matches(format!("{:?}", btree).as_str()));
+        assert!(WildMatch::new(buy_str).matches(format!("{:?}", buy_orders).as_str()));
+        assert!(WildMatch::new(sell_str).matches(format!("{:?}", sell_orders).as_str()));
 
     }
 }
