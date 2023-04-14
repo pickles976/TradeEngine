@@ -232,6 +232,8 @@ fn buy(order: Order, ledger: &mut Ledger, summary: &mut Summary) {
     let mut order = order;
     let end = sell_orders.binary_search(&order).unwrap_or_else(|e| e);
 
+    let mut to_remove = vec![];
+
     // low to high
     for i in 0..end {
 
@@ -253,6 +255,8 @@ fn buy(order: Order, ledger: &mut Ledger, summary: &mut Summary) {
                 order.amount = 0;
             }
 
+            if sell_orders[i].amount < 1 { to_remove.push(i); }
+
             let transaction = Transaction::new(order.user_id.clone(), sell_orders[i].user_id.clone(), amount, sell_orders[i].price_per);
             summary.transactions.push(transaction);
             summary.to_update.push(sell_orders[i].clone());
@@ -262,7 +266,11 @@ fn buy(order: Order, ledger: &mut Ledger, summary: &mut Summary) {
         }
     }
 
-    sell_orders.retain(|x| x.amount > 0);
+    to_remove.sort();
+    to_remove.reverse();
+    for i in 0..to_remove.len() {
+        sell_orders.remove(to_remove[i]);
+    }
 
     if order.amount < 1 { return }
 
@@ -280,6 +288,9 @@ fn sell(order: Order, ledger: &mut Ledger, summary: &mut Summary) {
 
     let mut order = order;
     let end = buy_orders.binary_search(&order).unwrap_or_else(|e| e);
+
+    // 
+    let mut to_remove = vec![];
 
     // high to low
     for i in (end..buy_orders.len()).rev() {
@@ -302,6 +313,8 @@ fn sell(order: Order, ledger: &mut Ledger, summary: &mut Summary) {
                 order.amount = 0;
             }
 
+            if buy_orders[i].amount < 1 { to_remove.push(i); }
+
             let transaction = Transaction::new(order.user_id.clone(), buy_orders[i].user_id.clone(), amount, order.price_per);
             summary.transactions.push(transaction);
             summary.to_update.push(buy_orders[i].clone());
@@ -312,7 +325,11 @@ fn sell(order: Order, ledger: &mut Ledger, summary: &mut Summary) {
 
     }
 
-    buy_orders.retain(|x| x.amount > 0);
+    to_remove.sort();
+    to_remove.reverse();
+    for i in 0..to_remove.len() {
+        buy_orders.remove(to_remove[i]);
+    }
 
     if order.amount < 1 { return }
 
