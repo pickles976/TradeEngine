@@ -1,10 +1,8 @@
 use std::{collections::HashMap, cmp::Ordering, time::SystemTime};
 use rand::{seq::SliceRandom, Rng}; // 0.7.2
-use std::time::{Duration, Instant};
-use std::collections::BTreeMap;
-use uuid::{uuid, Uuid};
+use std::time::Instant;
+use uuid::Uuid;
 use ordered_float::OrderedFloat; // 1.0.2
-use sorted_vec::SortedVec;
 
 #[allow(non_snake_case)]
 
@@ -113,7 +111,6 @@ impl Market {
         } else {
 
             let orders: &mut Vec<Order> = self.map.get_mut(&item).unwrap();
-            // orders.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
             // transact
             match order.kind {
@@ -157,8 +154,10 @@ fn buy(order: Order, orders: &mut Vec<Order>, transactions: &mut Vec<Transaction
     let temp_orders: &mut Vec<Order> = orders;
     let mut order = order;
 
+    let end = temp_orders.binary_search(&order).unwrap_or_else(|e| e);
+
     // low to high
-    for i in 0..temp_orders.len() {
+    for i in 0..end {
 
         if order.amount < 1 {break;}
 
@@ -201,8 +200,10 @@ fn sell(order: Order, orders: &mut Vec<Order>, transactions: &mut Vec<Transactio
     let temp_orders: &mut Vec<Order> = orders;
     let mut order = order;
 
+    let end = temp_orders.binary_search(&order).unwrap_or_else(|e| e);
+
     // high to low
-    for i in (0..temp_orders.len()).rev() {
+    for i in (end..temp_orders.len()).rev() {
 
         if order.amount < 1 {break;}
 
@@ -279,7 +280,7 @@ fn main() {
     let items = vec!["APPLES", "BANANAS", "CORN", "DETERGENT", "EGGS", "FROGS", "GRUEL", 
     "HALO_3", "INCENSE", "JUUL", "KNIVES", "LAVA", "MYCELIUM", "NITROGEN", "OVALTINE", "POGS"];
 
-    for _ in 0..2_000_000 {
+    for _ in 0..300_000 {
 
         let user = names.choose(&mut rand::thread_rng()).unwrap().to_string();
         let item = items.choose(&mut rand::thread_rng()).unwrap().to_string();
@@ -301,4 +302,65 @@ fn main() {
 
     println!("{}", now.elapsed().as_millis());
     
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+    use wildmatch::WildMatch;
+
+    #[test]
+    fn test_buy_and_sell() {
+
+        let mut exchange = Exchange::new();
+
+        let order1 = OrderRequest::new("BOB".to_string(), "CORN".to_string(), OrderKind::BUY, 32, 12.0);
+        let order2 = OrderRequest::new("ALICE".to_string(), "CORN".to_string(),OrderKind::BUY, 12, 14.0);
+        let order3 = OrderRequest::new("CAROL".to_string(), "CORN".to_string(),OrderKind::SELL, 20, 10.0);
+        let order4 = OrderRequest::new("CAROL".to_string(), "CORN".to_string(),OrderKind::SELL, 14, 15.0);
+    
+        exchange.place_order(order1);
+        exchange.place_order(order2);
+        exchange.place_order(order3);
+        exchange.place_order(order4);
+
+
+        println!("{:?}", exchange.market.map.get("CORN").unwrap());
+
+        let btree = exchange.market.map.get("CORN").unwrap();
+
+        let test_str = "[Order { id: *, user_id: \"BOB\", kind: BUY, amount: 24, price_per: OrderedFloat(12.0) }, Order { id: *, user_id: \"CAROL\", kind: SELL, amount: 14, price_per: OrderedFloat(15.0) }]";
+
+        assert!(WildMatch::new(test_str).matches(format!("{:?}", btree).as_str()));
+
+    }
+
+    #[test]
+    fn test_buy_and_sell_and_buy() {
+
+        let mut exchange = Exchange::new();
+
+        let order1 = OrderRequest::new("BOB".to_string(), "CORN".to_string(), OrderKind::BUY, 32, 12.0);
+        let order2 = OrderRequest::new("ALICE".to_string(), "CORN".to_string(),OrderKind::BUY, 12, 14.0);
+        let order3 = OrderRequest::new("CAROL".to_string(), "CORN".to_string(),OrderKind::SELL, 20, 10.0);
+        let order4 = OrderRequest::new("CAROL".to_string(), "CORN".to_string(),OrderKind::SELL, 14, 15.0);
+        let order5 = OrderRequest::new("ALICE".to_string(), "CORN".to_string(),OrderKind::BUY, 14, 16.0);
+    
+        exchange.place_order(order1);
+        exchange.place_order(order2);
+        exchange.place_order(order3);
+        exchange.place_order(order4);
+        exchange.place_order(order5);
+
+
+        println!("{:?}", exchange.market.map.get("CORN").unwrap());
+
+        let btree = exchange.market.map.get("CORN").unwrap();
+
+        let test_str = "[Order { id: *, user_id: \"BOB\", kind: BUY, amount: 24, price_per: OrderedFloat(12.0) }]";
+
+        assert!(WildMatch::new(test_str).matches(format!("{:?}", btree).as_str()));
+
+    }
 }
