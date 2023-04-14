@@ -162,4 +162,25 @@ mod tests {
 
     }
 
+    #[test]
+    fn test_cancel_full() {
+
+        let mut exchange = Market::new();
+
+        // let order1 = OrderRequest::new("BOB".to_string(), "CORN".to_string(), OrderKind::BUY, 12, 14.0);
+
+        let order1 = OrderRequest::new("BOB".to_string(), "CORN".to_string(), OrderKind::BUY, 12, 14.0);
+        let order2 = OrderRequest::new("ALICE".to_string(), "CORN".to_string(),OrderKind::SELL, 32, 12.0);
+    
+        // let summary = exchange.place_order(order1);
+        let summary = exchange.place_order(order1);
+        exchange.place_order(order2);
+
+        println!("{:?}", summary);
+        println!("{:?}", exchange.map);
+
+        // assert_eq!(price, 12.0);
+
+    }
+
 }

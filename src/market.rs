@@ -1,4 +1,4 @@
-use std::{collections::HashMap, cmp::Ordering, time::SystemTime};
+use std::{collections::HashMap, cmp::Ordering, time::SystemTime, cell::{Cell, RefCell, RefMut}};
 use rand::{seq::SliceRandom, Rng}; // 0.7.2
 use std::time::Instant;
 use uuid::Uuid;
@@ -126,10 +126,11 @@ impl Market {
         if !self.map.contains_key(&item) { // insert into ledger
             let mut ledger = Ledger::new();
             match order.kind {
-                OrderKind::BUY => ledger.buy_orders.push(order),
-                OrderKind::SELL => ledger.sell_orders.push(order),
+                OrderKind::BUY => ledger.buy_orders.push(order.clone()),
+                OrderKind::SELL => ledger.sell_orders.push(order.clone()),
             }
             self.map.insert(item, ledger);
+            summary.created = Some(order);
         } else { // update ledger
 
             let ledger = &mut self.map.get_mut(&item).unwrap();
@@ -144,6 +145,28 @@ impl Market {
         summary
 
     } 
+
+    pub fn cancel_order(&mut self, order_request: OrderRequest) -> Option<Order> {
+
+        let item = order_request.item;
+
+        let ledger = &mut self.map.get_mut(&item).unwrap();
+
+        let orders: &mut Vec<Order>;
+
+        match order_request.order.kind {
+            OrderKind::BUY => orders = &mut ledger.buy_orders,
+            OrderKind::SELL => orders = &mut ledger.sell_orders,
+        };
+
+        for i in 0..ledger.buy_orders.len() {
+            if ledger.buy_orders[i].id == order_request.order.id {
+                return Some(ledger.buy_orders.remove(i));
+            }
+        }
+
+        None
+    }
 
 }
 
@@ -238,7 +261,6 @@ fn buy(order: Order, ledger: &mut Ledger, summary: &mut Summary) {
     let pos = buy_orders.binary_search(&order).unwrap_or_else(|e| e);
     buy_orders.insert(pos, order.clone());
     summary.created = Some(order);
-
 
 }
 
