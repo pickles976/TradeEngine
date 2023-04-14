@@ -158,7 +158,14 @@ mod tests {
 
         println!("{:?}", summary);
 
-        // assert_eq!(price, 12.0);
+        let transactions_str = "[Transaction { buyer: \"ALICE\", seller: \"BOB\", amount: 12, price_per: OrderedFloat(12.0), time: SystemTime { intervals: * } }]";
+        let to_update_str = "[Order { id: *, user_id: \"BOB\", kind: BUY, amount: 0, price_per: OrderedFloat(14.0) }]";
+        let created_str = "Some(Order { id: *, user_id: \"ALICE\", kind: SELL, amount: 20, price_per: OrderedFloat(12.0) })";
+
+        assert_eq!("CORN", summary.key);
+        assert!(WildMatch::new(transactions_str).matches(format!("{:?}", summary.transactions).as_str()));
+        assert!(WildMatch::new(to_update_str).matches(format!("{:?}", summary.to_update).as_str()));
+        assert!(WildMatch::new(created_str).matches(format!("{:?}", summary.created).as_str()));
 
     }
 
@@ -196,6 +203,24 @@ mod tests {
         exchange.cancel_order(item.clone(), order);
 
         assert_eq!(exchange.map.get(&item).unwrap().buy_orders.len(), 0);
+
+    }
+
+    #[test]
+    fn test_query() {
+
+        let mut exchange = Market::new();
+
+        let order1 = OrderRequest::new("BOB".to_string(), "CORN".to_string(), OrderKind::BUY, 32, 12.0);
+        let order2 = OrderRequest::new("ALICE".to_string(), "CORN".to_string(),OrderKind::BUY, 12, 14.0);
+    
+        exchange.place_order(order1);
+        exchange.place_order(order2);
+
+        let test_str = "Some(Ledger { buy_orders: [Order { id: *, user_id: \"BOB\", kind: BUY, amount: 32, price_per: OrderedFloat(12.0) }, Order { id: *, user_id: \"ALICE\", kind: BUY, amount: 12, price_per: OrderedFloat(14.0) }], sell_orders: [] })";
+
+        assert!(WildMatch::new(test_str).matches(format!("{:?}", exchange.query_ledger("CORN".to_string())).as_str()));
+        assert_eq!(None, exchange.query_ledger("STUFF".to_string()));
 
     }
 

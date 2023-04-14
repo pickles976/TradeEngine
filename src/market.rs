@@ -88,7 +88,7 @@ impl Transaction {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Ledger {
     pub buy_orders: Vec<Order>,
     pub sell_orders: Vec<Order>,
@@ -148,7 +148,7 @@ impl Market {
 
     pub fn cancel_order(&mut self, item: String, order: Order) -> Option<Order> {
 
-        let ledger = &mut self.map.get_mut(&item).unwrap();
+        let ledger = &mut self.map.get_mut(&item.to_uppercase()).unwrap();
 
         let orders: &mut Vec<Order>;
 
@@ -164,6 +164,17 @@ impl Market {
         }
 
         None
+    }
+
+    pub fn query_ledger(&mut self, item: String) -> Option<Ledger> {
+
+        let result = self.map.get(&item.to_uppercase());
+
+        match result {
+            Some(ledger) => return Some(ledger.clone()),
+            None => return None
+        }
+
     }
 
 }
