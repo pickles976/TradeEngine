@@ -10,6 +10,8 @@ use ordered_float::OrderedFloat; // 1.0.2
 pub enum OrderKind {
     BUY,
     SELL,
+    MARKET_BUY,
+    MARKET_SELL,
 }
 
 #[derive(Debug, Clone)]
@@ -128,6 +130,7 @@ impl Market {
             match order.kind {
                 OrderKind::BUY => ledger.buy_orders.push(order.clone()),
                 OrderKind::SELL => ledger.sell_orders.push(order.clone()),
+                _ => { /* Do nothing */}
             }
             self.map.insert(item, ledger);
             summary.created = Some(order);
@@ -139,6 +142,8 @@ impl Market {
             match order.kind {
                 OrderKind::BUY => buy(order, ledger, &mut summary),
                 OrderKind::SELL => sell(order, ledger, &mut summary),
+                OrderKind::MARKET_BUY => market_buy(order, ledger, &mut summary),
+                OrderKind::MARKET_SELL => market_sell(order, ledger, &mut summary),
             };
         }
 
@@ -155,6 +160,7 @@ impl Market {
         match order.kind {
             OrderKind::BUY => orders = &mut ledger.buy_orders,
             OrderKind::SELL => orders = &mut ledger.sell_orders,
+            _ => { /* Do nothing */ }
         };
 
         for i in 0..ledger.buy_orders.len() {
@@ -338,4 +344,92 @@ fn sell(order: Order, ledger: &mut Ledger, summary: &mut Summary) {
     sell_orders.insert(pos, order.clone());
     summary.created = Some(order);
 
+}
+
+fn market_sell(order: Order, ledger: &mut Ledger, summary: &mut Summary) {
+    let buy_orders: &mut Vec<Order> = &mut ledger.buy_orders;
+
+    let mut order = order;
+
+    // 
+    let mut to_remove = vec![];
+
+    // high to low
+    for i in (0..buy_orders.len()).rev() {
+
+        if order.amount < 1 {break;}
+
+        let amount;
+        if buy_orders[i].amount > order.amount {
+            amount = order.amount;
+            buy_orders[i].amount -= order.amount;
+            order.amount = 0;
+        } else if buy_orders[i].amount < order.amount {
+            amount = buy_orders[i].amount;
+            order.amount -= buy_orders[i].amount;
+            buy_orders[i].amount = 0;
+        } else {
+            amount = order.amount;
+            buy_orders[i].amount = 0;
+            order.amount = 0;
+        }
+
+        if buy_orders[i].amount < 1 { to_remove.push(i); }
+
+        let transaction = Transaction::new(order.user_id.clone(), buy_orders[i].user_id.clone(), amount, order.price_per);
+        summary.transactions.push(transaction);
+        summary.to_update.push(buy_orders[i].clone());
+
+    }
+
+    to_remove.sort();
+    to_remove.reverse();
+    for i in 0..to_remove.len() {
+        buy_orders.remove(to_remove[i]);
+    }
+
+}
+
+fn market_buy(order: Order, ledger: &mut Ledger, summary: &mut Summary) {
+
+    let sell_orders: &mut Vec<Order> = &mut ledger.sell_orders;
+
+    let mut order = order;
+
+    let mut to_remove = vec![];
+
+    // low to high
+    for i in 0..sell_orders.len() {
+
+        if order.amount < 1 {break;}
+
+        let amount;
+        if sell_orders[i].amount > order.amount {
+            amount = order.amount;
+            sell_orders[i].amount -= order.amount;
+            order.amount = 0;
+        } else if sell_orders[i].amount < order.amount {
+            amount = sell_orders[i].amount;
+            order.amount -= sell_orders[i].amount;
+            sell_orders[i].amount = 0;
+        } else {
+            amount = order.amount;
+            sell_orders[i].amount = 0;
+            order.amount = 0;
+        }
+
+        if sell_orders[i].amount < 1 { to_remove.push(i); }
+
+        let transaction = Transaction::new(order.user_id.clone(), sell_orders[i].user_id.clone(), amount, sell_orders[i].price_per);
+        summary.transactions.push(transaction);
+        summary.to_update.push(sell_orders[i].clone());
+
+    }
+
+    to_remove.sort();
+    to_remove.reverse();
+    for i in 0..to_remove.len() {
+        sell_orders.remove(to_remove[i]);
+    }
+    
 }

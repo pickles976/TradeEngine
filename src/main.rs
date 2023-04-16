@@ -21,7 +21,7 @@ fn main() {
     let items = vec!["APPLES", "BANANAS", "CORN", "DETERGENT", "EGGS", "FROGS", "GRUEL", 
     "HALO_3", "INCENSE", "JUUL", "KNIVES", "LAVA", "MYCELIUM", "NITROGEN", "OVALTINE", "POGS"];
 
-    for _ in 0..2_000_000 {
+    for _ in 0..300_000 {
 
         let user = names.choose(&mut rand::thread_rng()).unwrap().to_string();
         let item = items.choose(&mut rand::thread_rng()).unwrap().to_string();
@@ -221,6 +221,48 @@ mod tests {
 
         assert!(WildMatch::new(test_str).matches(format!("{:?}", exchange.query_ledger("CORN".to_string())).as_str()));
         assert_eq!(None, exchange.query_ledger("STUFF".to_string()));
+
+    }
+
+    #[test]
+    fn test_market_buy() {
+
+        let mut exchange = Market::new();
+
+        let order1 = OrderRequest::new("BOB".to_string(), "CORN".to_string(), OrderKind::SELL, 32, 12.0);
+        let order2 = OrderRequest::new("ALICE".to_string(), "CORN".to_string(),OrderKind::SELL, 12, 14.0);
+        let order3 = OrderRequest::new("CAROL".to_string(), "CORN".to_string(),OrderKind::MARKET_BUY, 34, 0.0);
+    
+        exchange.place_order(order1);
+        exchange.place_order(order2);
+        exchange.place_order(order3);
+
+        let sell_orders = &exchange.map.get("CORN").unwrap().sell_orders;
+
+        let test_str = "[Order { id: *, user_id: \"ALICE\", kind: SELL, amount: 10, price_per: OrderedFloat(14.0) }]";
+
+        assert!(WildMatch::new(test_str).matches(format!("{:?}", sell_orders).as_str()));
+
+    }
+
+    #[test]
+    fn test_market_sell() {
+
+        let mut exchange = Market::new();
+
+        let order1 = OrderRequest::new("BOB".to_string(), "CORN".to_string(), OrderKind::BUY, 32, 12.0);
+        let order2 = OrderRequest::new("ALICE".to_string(), "CORN".to_string(),OrderKind::BUY, 12, 14.0);
+        let order3 = OrderRequest::new("CAROL".to_string(), "CORN".to_string(),OrderKind::MARKET_SELL, 34, 0.0);
+    
+        exchange.place_order(order1);
+        exchange.place_order(order2);
+        exchange.place_order(order3);
+
+        let buy_orders = &exchange.map.get("CORN").unwrap().buy_orders;
+
+        let test_str = "[Order { id: *, user_id: \"BOB\", kind: BUY, amount: 10, price_per: OrderedFloat(12.0) }]";
+
+        assert!(WildMatch::new(test_str).matches(format!("{:?}", buy_orders).as_str()));
 
     }
 
