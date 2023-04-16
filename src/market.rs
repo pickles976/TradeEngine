@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use crate::structs::{Order, OrderRequest, OrderKind, Transaction};
+use crate::structs::{Order, OrderRequest, OrderKind, Transaction, Summary};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Ledger {
@@ -112,26 +112,6 @@ impl Market {
         }
     }
 
-}
-
-/// Summary of what occured
-#[derive(Debug, PartialEq)]
-pub struct Summary {
-    pub key: String,
-    pub transactions: Vec<Transaction>,
-    pub to_update: Vec<Order>,
-    pub created: Option<Order>
-}
-
-impl Summary {
-    pub fn new(key: String) -> Summary {
-        Summary {
-            key: key,
-            transactions: vec![],
-            to_update: vec![],
-            created: None
-        }
-    }
 }
 
 /// Long-term history should be swapped out for something that you can plug in, like Cassandra or something

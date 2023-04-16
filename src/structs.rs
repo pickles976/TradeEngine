@@ -2,7 +2,11 @@ use std::{cmp::Ordering, time::SystemTime};
 use uuid::Uuid;
 use ordered_float::OrderedFloat; // 1.0.2
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+use serde::{Serialize, Deserialize};
+use wasm_bindgen::prelude::*;
+
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 pub enum OrderKind {
     BUY,
     SELL,
@@ -29,6 +33,25 @@ impl Order {
             price_per: OrderedFloat(price_per),
         }
     }
+
+    pub fn to_json(&mut self) -> OrderJSON {
+        OrderJSON { 
+            id: self.id.to_string(),
+            user_id: self.user_id, 
+            kind: self.kind, 
+            amount: self.amount, 
+            price_per: self.price_per.0 
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+struct OrderJSON {
+    pub id: String,
+    pub user_id: String,
+    pub kind: OrderKind,
+    pub amount: u32,
+    pub price_per: f32
 }
 
 impl PartialEq for Order {
@@ -63,14 +86,27 @@ impl OrderRequest {
             order: Order::new(user_id, kind, amount, price_per), 
         }
     }
+
+    pub fn from_json_string(json_str: &str) -> OrderRequest {
+        let data: OrderRequestJSON = serde_json::from_str(&json_str).unwrap_throw();
+        OrderRequest::new(data.user_id, data.item, OrderKind::BUY, data.amount, data.price_per)
+    }
+ }
+
+#[derive(Serialize, Deserialize)]
+struct OrderRequestJSON {
+    pub user_id: String, 
+    pub item: String, 
+    pub amount: u32, 
+    pub price_per: f32
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct Transaction {
     pub buyer: String,
     pub seller: String,
     pub amount: u32,
-    pub price_per: OrderedFloat<f32>,
+    pub price_per: f32,
     pub time: SystemTime,
 }
 
@@ -80,8 +116,51 @@ impl Transaction {
             buyer: buyer_id,
             seller: seller_id,
             amount: amount,
-            price_per: price_per,
+            price_per: price_per.0,
             time: SystemTime::now()
         }
     }
+}
+
+/// Summary of what occured
+#[derive(Debug, PartialEq)]
+pub struct Summary {
+    pub key: String,
+    pub transactions: Vec<Transaction>,
+    pub to_update: Vec<Order>,
+    pub created: Option<Order>
+}
+
+impl Summary {
+    pub fn new(key: String) -> Summary {
+        Summary {
+            key: key,
+            transactions: vec![],
+            to_update: vec![],
+            created: None
+        }
+    }
+
+    pub fn to_json_str(&mut self) -> String {
+
+        let summary_json = SummaryJSON {
+            key: self.key,
+            transactions: self.transactions,
+            to_update: self.to_update.iter().map(|x| { x.to_json() }).collect(),
+            created: match self.created {
+                Some(order) => Some(order.to_json()),
+                None => None,
+            },
+        };
+
+        serde_json::to_string(&summary_json).unwrap()
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct SummaryJSON {
+    pub key: String,
+    pub transactions: Vec<Transaction>,
+    pub to_update: Vec<OrderJSON>,
+    pub created: Option<OrderJSON>
 }
