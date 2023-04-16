@@ -34,10 +34,10 @@ impl Order {
         }
     }
 
-    pub fn to_json(&mut self) -> OrderJSON {
+    pub fn to_json(&self) -> OrderJSON {
         OrderJSON { 
             id: self.id.to_string(),
-            user_id: self.user_id, 
+            user_id: self.user_id.clone(), 
             kind: self.kind, 
             amount: self.amount, 
             price_per: self.price_per.0 
@@ -46,7 +46,7 @@ impl Order {
 }
 
 #[derive(Serialize, Deserialize)]
-struct OrderJSON {
+pub struct OrderJSON {
     pub id: String,
     pub user_id: String,
     pub kind: OrderKind,
@@ -141,7 +141,7 @@ impl Summary {
         }
     }
 
-    pub fn to_json_str(&mut self) -> String {
+    pub fn to_json_str(self) -> String {
 
         let summary_json = SummaryJSON {
             key: self.key,

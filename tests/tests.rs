@@ -111,13 +111,14 @@ fn test_summary() {
     exchange.place_order(order1);
     let summary = exchange.place_order(order2);
 
-    println!("{:?}", summary);
+    // println!("{:?}", summary);
 
-    let transactions_str = "[Transaction { buyer: \"ALICE\", seller: \"BOB\", amount: 12, price_per: OrderedFloat(12.0), time: SystemTime { intervals: * } }]";
+    let transactions_str = "[Transaction { buyer: \"ALICE\", seller: \"BOB\", amount: 12, price_per: 12.0, time: SystemTime { intervals: * } }]";
     let to_update_str = "[Order { id: *, user_id: \"BOB\", kind: BUY, amount: 0, price_per: OrderedFloat(14.0) }]";
     let created_str = "Some(Order { id: *, user_id: \"ALICE\", kind: SELL, amount: 20, price_per: OrderedFloat(12.0) })";
 
     assert_eq!("CORN", summary.key);
+    println!("{:?}", summary.transactions);
     assert!(WildMatch::new(transactions_str).matches(format!("{:?}", summary.transactions).as_str()));
     assert!(WildMatch::new(to_update_str).matches(format!("{:?}", summary.to_update).as_str()));
     assert!(WildMatch::new(created_str).matches(format!("{:?}", summary.created).as_str()));
