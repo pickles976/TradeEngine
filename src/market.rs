@@ -183,6 +183,24 @@ impl Market {
 
     }
 
+    pub fn get_best_buying_price(&mut self, item: String) -> Option<&Order> {
+        let result = self.map.get(&item.to_uppercase());
+
+        match result {
+            Some(ledger) => return ledger.buy_orders.last(),
+            None => return None
+        }
+    }
+
+    pub fn get_best_selling_price(&mut self, item: String) -> Option<&Order> {
+        let result = self.map.get(&item.to_uppercase());
+
+        match result {
+            Some(ledger) => return ledger.sell_orders.first(),
+            None => return None
+        }
+    }
+
 }
 
 /// Summary of what occured

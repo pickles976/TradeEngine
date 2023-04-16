@@ -266,4 +266,44 @@ mod tests {
 
     }
 
+    #[test]
+    fn test_sell_price() {
+
+        let mut exchange = Market::new();
+        let item = "CORN".to_string();
+
+        let order1 = OrderRequest::new("BOB".to_string(), item.clone(), OrderKind::SELL, 32, 12.0);
+        let order2 = OrderRequest::new("ALICE".to_string(), item.clone(),OrderKind::SELL, 12, 14.0);
+    
+        exchange.place_order(order1);
+        exchange.place_order(order2);
+
+        let best_order = exchange.get_best_selling_price(item).unwrap();
+
+        let test_str = "Order { id: *, user_id: \"BOB\", kind: SELL, amount: 32, price_per: OrderedFloat(12.0) }";
+
+        assert!(WildMatch::new(test_str).matches(format!("{:?}", best_order).as_str()));
+
+    }
+
+    #[test]
+    fn test_buy_price() {
+
+        let mut exchange = Market::new();
+        let item = "CORN".to_string();
+
+        let order1 = OrderRequest::new("BOB".to_string(), item.clone(), OrderKind::BUY, 32, 12.0);
+        let order2 = OrderRequest::new("ALICE".to_string(), item.clone(),OrderKind::BUY, 12, 14.0);
+    
+        exchange.place_order(order1);
+        exchange.place_order(order2);
+
+        let best_order = exchange.get_best_buying_price(item).unwrap();
+
+        let test_str = "Order { id: *, user_id: \"ALICE\", kind: BUY, amount: 12, price_per: OrderedFloat(14.0) }";
+
+        assert!(WildMatch::new(test_str).matches(format!("{:?}", best_order).as_str()));
+
+    }
+
 }
