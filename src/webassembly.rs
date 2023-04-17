@@ -27,6 +27,14 @@ impl MarketWrapper {
         }
     }
 
+    pub fn test(&mut self) -> String {
+        "Constructor works".to_string()
+    }
+
+    pub fn test_serialization(&mut self, order_request_str: &str) -> String {
+        order_request_str.to_string()
+    }
+
     pub fn buy(&mut self, order_request_str: &str) -> String {
         let mut order_request: OrderRequest = OrderRequest::from_json_string(order_request_str);
         order_request.order.kind = OrderKind::BUY;
@@ -39,4 +47,9 @@ impl MarketWrapper {
         self.market.place_order(order_request).to_json_str()
     }
 
+}
+
+#[wasm_bindgen]
+pub fn test() -> String {
+    "Module works".to_string()
 }
