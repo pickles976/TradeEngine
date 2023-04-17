@@ -19,6 +19,10 @@ getrandom = { version = "0.2.9", features = ["js"] }
 wildmatch = "2.1.1"
 uuid = { version = "1.3.1", features = ["v4","fast-rng","macro-diagnostics"] }
 wasm-bindgen = "0.2.84"
+[dependencies.chrono]
+version = "0.4"
+default-features = false
+features = ["wasmbind", "js-sys"]
 
 [lib]
 crate-type = ["cdylib", "rlib"]

@@ -268,8 +268,6 @@ fn speed_test() {
     let now = Instant::now();
 
     let mut exchange = Market::new();
-    
-    let item = "corn".to_string();
 
     let names = vec!["ALICE", "BOB", "CLYDE", "DOOFUS", "EDGAR", "FRANK", "GOMEZ", 
     "HASAN", "ISKANDAR", "JOE", "KYLE", "LARRY", "MOE", "NIGEL", "OSACR", "PAUL", "QBERT", 
