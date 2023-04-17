@@ -50,7 +50,7 @@ fn test_buy_and_sell() {
 
     println!("{}", summary);
 
-    let test_str = "{\"key\":\"NITROGEN\",\"transactions\":[{\"buyer\":\"YOLANDE\",\"seller\":\"YOLANDE\",\"amount\":347,\"price_per\":6.0,\"time\":{\"secs_since_epoch\":*,\"nanos_since_epoch\":*}}],\"to_update\":[{\"id\":\"*\",\"user_id\":\"YOLANDE\",\"kind\":\"BUY\",\"amount\":0,\"price_per\":6.0}],\"created\":null}";
+    let test_str = "{\"key\":\"NITROGEN\",\"transactions\":[{\"buyer\":\"YOLANDE\",\"seller\":\"YOLANDE\",\"amount\":347,\"price_per\":6.0}],\"to_update\":[{\"id\":\"*\",\"user_id\":\"YOLANDE\",\"kind\":\"BUY\",\"amount\":0,\"price_per\":6.0}],\"created\":null}";
 
     assert!(WildMatch::new(test_str).matches(summary.as_str()));
 }
@@ -68,7 +68,7 @@ fn test_buy_buy_sell() {
 
     println!("{}", summary);
 
-    let test_str = "{\"key\":\"NITROGEN\",\"transactions\":[{\"buyer\":\"YOLANDE\",\"seller\":\"YOLANDE\",\"amount\":347,\"price_per\":6.0,\"time\":{\"secs_since_epoch\":*,\"nanos_since_epoch\":*}}],\"to_update\":[{\"id\":\"*\",\"user_id\":\"YOLANDE\",\"kind\":\"BUY\",\"amount\":0,\"price_per\":6.0}],\"created\":null}";
+    let test_str = "{\"key\":\"NITROGEN\",\"transactions\":[{\"buyer\":\"YOLANDE\",\"seller\":\"YOLANDE\",\"amount\":347,\"price_per\":6.0}],\"to_update\":[{\"id\":\"*\",\"user_id\":\"YOLANDE\",\"kind\":\"BUY\",\"amount\":0,\"price_per\":6.0}],\"created\":null}";
 
     assert!(WildMatch::new(test_str).matches(summary.as_str()));
 }

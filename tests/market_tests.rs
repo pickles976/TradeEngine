@@ -113,7 +113,7 @@ fn test_summary() {
 
     // println!("{:?}", summary);
 
-    let transactions_str = "[Transaction { buyer: \"ALICE\", seller: \"BOB\", amount: 12, price_per: 12.0, time: SystemTime { intervals: * } }]";
+    let transactions_str = "[Transaction { buyer: \"ALICE\", seller: \"BOB\", amount: 12, price_per: 12.0 }]";
     let to_update_str = "[Order { id: *, user_id: \"BOB\", kind: BUY, amount: 0, price_per: OrderedFloat(14.0) }]";
     let created_str = "Some(Order { id: *, user_id: \"ALICE\", kind: SELL, amount: 20, price_per: OrderedFloat(12.0) })";
 

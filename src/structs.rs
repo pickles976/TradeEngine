@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, time::SystemTime};
+use std::cmp::Ordering;
 use uuid::Uuid;
 use ordered_float::OrderedFloat; // 1.0.2
 
@@ -107,7 +107,6 @@ pub struct Transaction {
     pub seller: String,
     pub amount: u32,
     pub price_per: f32,
-    pub time: SystemTime,
 }
 
 impl Transaction {
@@ -117,7 +116,6 @@ impl Transaction {
             seller: seller_id,
             amount: amount,
             price_per: price_per.0,
-            time: SystemTime::now()
         }
     }
 }
