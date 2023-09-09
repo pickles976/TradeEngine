@@ -1,4 +1,4 @@
-# CRABSHAQ
+# MarketCore
 
 A tiny market engine for matching buy/sell orders. Supports limit orders as well as market orders. Meant to be wrapped in a higher-level API.
 
@@ -7,13 +7,13 @@ A tiny market engine for matching buy/sell orders. Supports limit orders as well
 If using with node in the backend (or in the browser for some reason?) export as WASM package
 
 ```
-wasm-pack build --target web
+wasm-pack build --target nodejs
 ```
 
 In your Node project call it like:
 
 ```
-import { MarketWrapper, test } from './pkg/CRABSHAQ.js'
+import { MarketWrapper, test } from './pkg/MarketCore.js'
 let market = MarketWrapper.new()
 
 let order = {

@@ -1,7 +1,7 @@
 use std::time::Instant;
 use rand::{seq::SliceRandom, Rng}; // 0.7.2
 
-use CRABSHAQ::{self, structs::{OrderRequest, OrderKind}, MarketWrapper};
+use MarketCore::{self, structs::{OrderRequest, OrderKind}, MarketWrapper};
 use wildmatch::WildMatch;
 
 #[test]
