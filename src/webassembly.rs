@@ -4,7 +4,7 @@ use serde::{Serialize, Deserialize};
 pub mod market;
 pub mod structs;
 
-use crate::market::{Market};
+use crate::market::{Market, Ledger};
 use crate::structs::{OrderRequest, OrderKind};
 
 
@@ -46,6 +46,25 @@ impl MarketWrapper {
         order_request.order.kind = OrderKind::SELL;
         self.market.place_order(order_request).to_json_str()
     }
+
+    pub fn query_ledger(&mut self, item: &str) -> String {
+
+        // TODO: add an unwrap here
+        let mut ledger_copy: Ledger = self.market.query_ledger(item);
+        serde_json::to_string(&ledger_copy.to_json()).unwrap()
+    }
+
+    // pub fn cancel_order(&mut self, item: &str, order: &str) -> String {
+    //     // pass
+    // }
+
+    // pub fn get_best_buying_price(&mut self, item: &str) -> String {
+    //     // pass
+    // }
+
+    // pub fn get_best_selling_price(&mut self, item: &str) -> String {
+    //     // pass
+    // }
 
 }
 

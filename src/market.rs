@@ -1,10 +1,18 @@
 use std::collections::HashMap;
 use crate::structs::{Order, OrderRequest, OrderKind, Transaction, Summary};
 
+use serde::{Serialize, Deserialize};
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct Ledger {
     pub buy_orders: Vec<Order>,
     pub sell_orders: Vec<Order>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct LedgerJSON {
+    pub buy_orders: Vec<OrderJSON>,
+    pub sell_orders: Vec<OrderJSON>,
 }
 
 impl Ledger {
@@ -14,9 +22,16 @@ impl Ledger {
             sell_orders: vec![]
         }
     }
+
+    pub fn to_json(&self) -> LedgerJSON {
+        LedgerJSON { 
+            buy_orders: self.buy_orders.iter().map(|x| { x.to_json() }).collect(),
+            sell_orders: self.sell_orders.iter().map(|x| { x.to_json() }).collect(),
+        }
+    }
 }
 
-/// Market and History make up an exchange
+
 pub struct Market {
     pub map: HashMap<String, Ledger>,
 }
@@ -83,7 +98,7 @@ impl Market {
         None
     }
 
-    pub fn query_ledger(&mut self, item: String) -> Option<Ledger> {
+    pub fn query_ledger(&mut self, item: &str) -> Option<Ledger> {
 
         let result = self.map.get(&item.to_uppercase());
 
@@ -112,31 +127,6 @@ impl Market {
         }
     }
 
-}
-
-/// Long-term history should be swapped out for something that you can plug in, like Cassandra or something
-pub struct History {
-    pub map: HashMap<String, Vec<Transaction>>,
-}
-
-impl History {
-    pub fn new() -> History {
-        History {
-            map: HashMap::new()
-        }
-    }
-
-    pub fn add_transactions(&mut self, item: &String, transactions: Vec<Transaction>) {
-
-        if !self.map.contains_key(item) {
-            self.map.insert(item.to_owned(), transactions);
-            return;
-        }
-
-        let hist: &mut Vec<Transaction> = self.map.get_mut(item).unwrap();
-        hist.extend(transactions);
-        
-    }
 }
 
 fn buy(order: Order, ledger: &mut Ledger, summary: &mut Summary) {

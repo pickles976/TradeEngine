@@ -72,3 +72,40 @@ fn test_buy_buy_sell() {
 
     assert!(WildMatch::new(test_str).matches(summary.as_str()));
 }
+
+#[test]
+fn test_query_ledger() {
+
+    let order_request_str = "{\"user_id\":\"YOLANDE\",\"item\":\"NITROGEN\",\"amount\":347,\"price_per\":6}";
+
+    let mut exchange = MarketWrapper::new();
+
+    exchange.buy(&order_request_str);
+    exchange.buy(&order_request_str);
+    let summary = exchange.sell(&order_request_str);
+
+    println!("{}", summary);
+
+    let query_str = "NITROGEN";
+    let response = exchange.query_ledger(&query_str)
+
+    println!("{}", response)
+
+    // assert!(WildMatch::new(test_str).matches(summary.as_str()));
+
+}
+
+// #[test]
+// fn test_cancel_order() {
+
+// }
+
+// #[test]
+// fn test_get_best_buy_price() {
+
+// }
+
+// #[test]
+// fn test_get_best_sell_price() {
+
+// }
