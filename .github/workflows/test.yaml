@@ -2,10 +2,9 @@ name: Test Trade Engine
 run-name: Run cargo tests
 on: [push]
 jobs:
-  cargo_test:
+  test:
     runs-on: ubuntu-latest
-    name: Test with cargo
     steps:
-      - run: |
-        cargo install \
-        cargo test
+    - uses: actions/checkout@v2
+    - name: Build
+      run: cargo test
