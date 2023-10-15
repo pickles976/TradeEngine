@@ -77,34 +77,15 @@ impl Market {
 
     } 
 
-    // pub fn cancel_order(&mut self, item: String, order: Order) -> Option<Order> {
-
-    //     let ledger = &mut self.map.get_mut(&item.to_uppercase()).unwrap();
-
-    //     let orders: &mut Vec<Order>;
-
-    //     match order.kind {
-    //         OrderKind::BUY => orders = &mut ledger.buy_orders,
-    //         OrderKind::SELL => orders = &mut ledger.sell_orders,
-    //         _ => { /* Do nothing */ }
-    //     };
-
-    //     for i in 0..ledger.buy_orders.len() {
-    //         if ledger.buy_orders[i].id == order.id {
-    //             return Some(ledger.buy_orders.remove(i));
-    //         }
-    //     }
-
-    //     None
-    // }
-
     pub fn cancel_order(&mut self, item: String, order: Order) -> Option<Order> {
 
+        // Create an empty ptr
         let mut orders: Option<&mut Vec<Order>> = None;
 
         match self.map.get_mut(&item.to_uppercase()) {
             Some(ledger) => {
                 match order.kind {
+                    // Move ledger to ptr
                     OrderKind::BUY => orders = Some(&mut ledger.buy_orders),
                     OrderKind::SELL => orders = Some(&mut ledger.sell_orders),
                     _ => { /* Do nothing */ }
@@ -113,6 +94,7 @@ impl Market {
             None => { /* Do nothing */ }
         }
 
+        // Modify ledger via ptr
         if let Some(order_list) = orders {
             for i in 0..order_list.len() {
                 if order_list[i].id == order.id {

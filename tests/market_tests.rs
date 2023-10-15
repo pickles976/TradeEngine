@@ -2,6 +2,7 @@ use std::time::Instant;
 use rand::{seq::SliceRandom, Rng}; // 0.7.2
 
 use MarketCore::{self, structs::{OrderRequest, OrderKind}, market::Market};
+use uuid::Uuid;
 use wildmatch::WildMatch;
 
 #[test]
@@ -126,7 +127,7 @@ fn test_summary() {
 }
 
 #[test]
-fn test_cancel_full() {
+fn test_cancel_buy_order_full() {
 
     let mut exchange = Market::new();
 
@@ -139,6 +140,23 @@ fn test_cancel_full() {
     exchange.cancel_order(item.clone(), order);
 
     assert_eq!(exchange.map.get(&item).unwrap().buy_orders.len(), 0);
+
+}
+
+#[test]
+fn test_cancel_sell_order_full() {
+
+    let mut exchange = Market::new();
+
+    let order1 = OrderRequest::new("BOB".to_string(), "CORN".to_string(), OrderKind::SELL, 12, 14.0);
+
+    let summary = exchange.place_order(order1);
+    let order = summary.created.unwrap();
+    let item = summary.key;
+
+    exchange.cancel_order(item.clone(), order);
+
+    assert_eq!(exchange.map.get(&item).unwrap().sell_orders.len(), 0);
 
 }
 
@@ -163,7 +181,7 @@ fn test_cancel_partial() {
 }
 
 #[test]
-fn test_cancel_failure() {
+fn test_cancel_failure_bad_item() {
 
     let mut exchange = Market::new();
 
@@ -171,12 +189,37 @@ fn test_cancel_failure() {
 
     let summary = exchange.place_order(order1);
 
-    let order = summary.to_update[0].clone();
+    let order = summary.created.unwrap();
     let item = summary.key;
+
+    println!("{:?}", order);
+    println!("{:?}", exchange.query_ledger("CORN".to_string()).unwrap());
+
+    exchange.cancel_order("BRUH".to_string(), order);
+
+    assert_eq!(exchange.map.get(&item).unwrap().buy_orders.len(), 1);
+
+}
+
+#[test]
+fn test_cancel_failure_bad_order() {
+
+    let mut exchange = Market::new();
+
+    let order1 = OrderRequest::new("BOB".to_string(), "CORN".to_string(), OrderKind::BUY, 12, 14.0);
+
+    let summary = exchange.place_order(order1);
+
+    let mut order = summary.created.unwrap();
+    order.id = Uuid::new_v4();
+    let item = summary.key;
+
+    println!("{:?}", order);
+    println!("{:?}", exchange.query_ledger("CORN".to_string()).unwrap());
 
     exchange.cancel_order("CORN".to_string(), order);
 
-    assert_eq!(exchange.map.get(&item).unwrap().buy_orders.len(), 0);
+    assert_eq!(exchange.map.get(&item).unwrap().buy_orders.len(), 1);
 
 }
 
