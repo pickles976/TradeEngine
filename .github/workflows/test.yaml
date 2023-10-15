@@ -7,12 +7,12 @@ jobs:
     name: Test with cargo
     steps:
       - run: |
-      cargo install 
-      cargo test
+        cargo install 
+        cargo test
   wasm_build:
     runs-on: ubuntu-latest
     name: Build wasm package
     steps:
       - run: |
-      cargo install
-      wasm-pack build --target nodejs
+        cargo install
+        wasm-pack build --target nodejs
