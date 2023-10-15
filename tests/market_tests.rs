@@ -163,6 +163,24 @@ fn test_cancel_partial() {
 }
 
 #[test]
+fn test_cancel_failure() {
+
+    let mut exchange = Market::new();
+
+    let order1 = OrderRequest::new("BOB".to_string(), "CORN".to_string(), OrderKind::BUY, 12, 14.0);
+
+    let summary = exchange.place_order(order1);
+
+    let order = summary.to_update[0].clone();
+    let item = summary.key;
+
+    exchange.cancel_order("CORN".to_string(), order);
+
+    assert_eq!(exchange.map.get(&item).unwrap().buy_orders.len(), 0);
+
+}
+
+#[test]
 fn test_query() {
 
     let mut exchange = Market::new();
