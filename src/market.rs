@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use crate::structs::{Order, OrderRequest, OrderKind, Transaction, Summary};
+use crate::structs::{Order, OrderRequest, OrderKind, Transaction, Summary, OrderJSON};
 
 use serde::{Serialize, Deserialize};
 
@@ -98,7 +98,7 @@ impl Market {
         None
     }
 
-    pub fn query_ledger(&mut self, item: &str) -> Option<Ledger> {
+    pub fn query_ledger(&mut self, item: String) -> Option<Ledger> {
 
         let result = self.map.get(&item.to_uppercase());
 

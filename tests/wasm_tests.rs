@@ -86,12 +86,38 @@ fn test_query_ledger() {
 
     println!("{}", summary);
 
-    let query_str = "NITROGEN";
-    let response = exchange.query_ledger(&query_str)
+    let query_str = "NITROGEN".to_string();
+    let response = exchange.query_ledger(query_str);
 
-    println!("{}", response)
+    println!("{}", response);
 
-    // assert!(WildMatch::new(test_str).matches(summary.as_str()));
+    let test_str = "{\"buy_orders\":[{\"id\":\"*\",\"user_id\":\"YOLANDE\",\"kind\":\"BUY\",\"amount\":347,\"price_per\":6.0}],\"sell_orders\":[]}";
+
+    assert!(WildMatch::new(test_str).matches(response.as_str()));
+
+}
+
+#[test]
+fn test_query_ledger_empty() {
+
+    let order_request_str = "{\"user_id\":\"YOLANDE\",\"item\":\"NITROGEN\",\"amount\":347,\"price_per\":6}";
+
+    let mut exchange = MarketWrapper::new();
+
+    exchange.buy(&order_request_str);
+    exchange.buy(&order_request_str);
+    let summary = exchange.sell(&order_request_str);
+
+    println!("{}", summary);
+
+    let query_str = "CHEESE".to_string();
+    let response = exchange.query_ledger(query_str);
+
+    println!("{}", response);
+
+    let test_str = "{}";
+
+    assert!(WildMatch::new(test_str).matches(response.as_str()));
 
 }
 

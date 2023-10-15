@@ -47,11 +47,13 @@ impl MarketWrapper {
         self.market.place_order(order_request).to_json_str()
     }
 
-    pub fn query_ledger(&mut self, item: &str) -> String {
+    pub fn query_ledger(&mut self, item: String) -> String {
 
-        // TODO: add an unwrap here
-        let mut ledger_copy: Ledger = self.market.query_ledger(item);
-        serde_json::to_string(&ledger_copy.to_json()).unwrap()
+        let result: Option<Ledger> = self.market.query_ledger(item);
+        match result {
+            Some(ledger_copy) => serde_json::to_string(&ledger_copy.to_json()).unwrap(),
+            None => return "{}".to_string()
+        }
     }
 
     // pub fn cancel_order(&mut self, item: &str, order: &str) -> String {
