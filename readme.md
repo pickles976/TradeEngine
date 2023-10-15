@@ -1,14 +1,20 @@
-# MarketCore
+# TradeEngine
 
-A tiny market engine for matching buy/sell orders. Supports limit orders as well as market orders. Meant to be wrapped in a higher-level API.
+A tiny market engine for matching buy/sell orders. Supports limit orders as well as market orders. Meant to be wrapped in a higher-level API. A larger marketplace could be made by sharding ledgers by item type across multiple machines. 
+
+Goal: 10k transactions/sec on a Raspberry pi
 
 ## Usage
+
+### Building
 
 If using with node in the backend (or in the browser for some reason?) export as WASM package
 
 ```shell
 wasm-pack build --target nodejs
 ```
+
+### Importing
 
 In your Node project call it like:
 
@@ -27,6 +33,27 @@ order = JSON.stringify(order);
 let summary = market.buy(order);
 console.log(summary);
 ```
+
+### Available methods
+
+```javascript
+
+market.buy(order)
+market.sell(order)
+
+// TODO: add these
+// market.market_buy(order)
+// market.market_sell(order)
+
+market.query_ledger(item_string)
+market.cancel_order(item_string, order)
+
+market.get_best_buying_price(item_string)
+market.get_best_selling_price(item_string)
+
+
+```
+
 
 ## Methodology
 
@@ -58,3 +85,4 @@ to_update -- the new state of an order inside the ledger. Occurs when a partial 
 ## TODO
 
 - [x] Fix segfault in query ledger
+- [ ] Add market buy methods

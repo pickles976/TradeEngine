@@ -1,0 +1,18 @@
+name: Test Trade Engine
+run-name: Run cargo tests
+on: [push]
+jobs:
+  cargo_test:
+    runs-on: ubuntu-latest
+    name: Test with cargo
+    steps:
+      - run: |
+      cargo install 
+      cargo test
+  wasm_build:
+    runs-on: ubuntu-latest
+    name: Build wasm package
+    steps:
+      - run: |
+      cargo install
+      wasm-pack build --target nodejs
