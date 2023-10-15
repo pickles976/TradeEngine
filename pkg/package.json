@@ -1,0 +1,11 @@
+{
+  "name": "MarketCore",
+  "version": "0.1.0",
+  "files": [
+    "MarketCore_bg.wasm",
+    "MarketCore.js",
+    "MarketCore.d.ts"
+  ],
+  "main": "MarketCore.js",
+  "types": "MarketCore.d.ts"
+}

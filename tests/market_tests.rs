@@ -275,8 +275,11 @@ fn speed_test() {
 
     let items = vec!["APPLES", "BANANAS", "CORN", "DETERGENT", "EGGS", "FROGS", "GRUEL", 
     "HALO_3", "INCENSE", "JUUL", "KNIVES", "LAVA", "MYCELIUM", "NITROGEN", "OVALTINE", "POGS"];
+    
+    let num_trades = 300_000;
+    println!("Now running {} trades...", num_trades);
 
-    for _ in 0..300_000 {
+    for _ in 0..num_trades {
 
         let user = names.choose(&mut rand::thread_rng()).unwrap().to_string();
         let item = items.choose(&mut rand::thread_rng()).unwrap().to_string();
@@ -294,6 +297,8 @@ fn speed_test() {
 
     }
 
-    println!("{}", now.elapsed().as_millis());
+    let elapsed = now.elapsed().as_millis();
+    println!("Ran in {}ms", elapsed);
+    println!("{} trades/sec", (num_trades / elapsed) * 1000);
 
 }

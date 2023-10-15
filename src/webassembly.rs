@@ -69,13 +69,21 @@ impl MarketWrapper {
         }
     }
 
-    // pub fn get_best_buying_price(&mut self, item: &str) -> String {
-    //     // pass
-    // }
+    pub fn get_best_buying_price(&mut self, item: String) -> String {
+        
+        match self.market.get_best_buying_price(item) {
+            Some(order) => serde_json::to_string(&order.to_json()).unwrap(),
+            None => "{}".to_string()
+        }
 
-    // pub fn get_best_selling_price(&mut self, item: &str) -> String {
-    //     // pass
-    // }
+    }
+
+    pub fn get_best_selling_price(&mut self, item:String) -> String {
+        match self.market.get_best_selling_price(item) {
+            Some(order) => serde_json::to_string(&order.to_json()).unwrap(),
+            None => "{}".to_string()
+        }
+    }
 
 }
 
