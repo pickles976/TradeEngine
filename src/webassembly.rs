@@ -61,11 +61,11 @@ impl MarketWrapper {
             Some(order) => {
                 let result: Option<Order> = self.market.cancel_order(item, order);
                 match result {
-                    Some(_order) => "{ 'status': 'SUCCESS' }".to_string(),
-                    None => "{ 'status': 'FAILURE', 'reason' : 'Order does not exist' }".to_string()
+                    Some(_order) => "{ \"status\": \"SUCCESS\" }".to_string(),
+                    None => "{ \"status\": \"FAILURE\", \"reason\" : \"Order does not exist\" }".to_string()
                 }
             },
-            None => "{ 'status': 'FAILURE', 'reason' : 'Invalid UUID string' }".to_string()
+            None => "{ \"status\": \"FAILURE\", \"reason\" : \"Invalid UUID string\" }".to_string()
         }
     }
 

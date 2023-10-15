@@ -140,7 +140,7 @@ fn test_cancel_order_fail_no_key() {
 
     println!("{}", cancellation_status);
 
-    let test_str = "{ 'status': 'FAILURE', 'reason' : 'Order does not exist' }";
+    let test_str = "{ \"status\": \"FAILURE\", \"reason\" : \"Order does not exist\" }";
 
     assert!(WildMatch::new(test_str).matches(cancellation_status.as_str()));
 
@@ -165,7 +165,7 @@ fn test_cancel_order_fail_bad_uuid() {
 
     println!("{}", cancellation_status);
 
-    let test_str = "{ 'status': 'FAILURE', 'reason' : 'Invalid UUID string' }";
+    let test_str = "{ \"status\": \"FAILURE\", \"reason\" : \"Invalid UUID string\" }";
 
     assert!(WildMatch::new(test_str).matches(cancellation_status.as_str()));
 
