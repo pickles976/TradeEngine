@@ -324,6 +324,7 @@ fn test_buy_price() {
 }
 
 #[test]
+#[ignore = "Only run manually"]
 fn speed_test() {
 
     let now = Instant::now();

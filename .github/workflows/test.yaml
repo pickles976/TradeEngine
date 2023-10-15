@@ -1,4 +1,4 @@
-name: Test Trade Engine
+name: Unit Tests
 run-name: Run cargo tests
 on: [push]
 jobs:
