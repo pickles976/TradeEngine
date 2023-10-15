@@ -3,9 +3,14 @@
 ![Tests](https://github.com/pickles976/TradeEngine/actions/workflows/test.yaml/badge.svg)
 ![WASM Build](https://github.com/pickles976/TradeEngine/actions/workflows/build.yaml/badge.svg)
 
-A tiny market engine for matching buy/sell orders. Supports limit orders as well as market orders. Meant to be wrapped in a higher-level API. A larger marketplace could be made by sharding ledgers by item type across multiple machines. 
+A tiny market engine for matching buy/sell orders. Supports limit orders as well as market orders. Meant to be wrapped in a higher-level API. 
 
-Goal: 10k transactions/sec on a Raspberry pi
+The general idea is to be able to use this to host an amateur virtual marketplace, on the scale of the Runescape GE or somthing similar. I created it to eventually add to a game I'm working on.
+
+A larger marketplace could be made by sharding ledgers by item type across multiple machines. I intend to use sqlite to handle user data storage and transaction history just because of its ease of use and portability, but you could use a more persistent data storage, you just need to write a wrapper for it.
+
+This system offers no security, guarantee of transaction correctness, or persistence of data.
+
 
 ## Usage
 
@@ -89,3 +94,4 @@ to_update -- the new state of an order inside the ledger. Occurs when a partial 
 
 - [x] Fix segfault in query ledger
 - [ ] Add market buy methods
+- [ ] Ability to serialize and deserialize entire market to json or sqlite file to save snapshots of market status
