@@ -1,0 +1,11 @@
+name: Build wasm package
+run-name: Build package
+on: [push]
+jobs:
+  wasm_build:
+    runs-on: ubuntu-latest
+    name: Build wasm package
+    steps:
+      - run: |
+        cargo install \ 
+        wasm-pack build --target nodejs

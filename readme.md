@@ -1,6 +1,7 @@
 # TradeEngine
 
-![Tests Passing](https://github.com/pickles976/TradeEngine/actions/workflows/test.yaml/badge.svg)
+![Tests](https://github.com/pickles976/TradeEngine/actions/workflows/test.yaml/badge.svg)
+![WASM Build](https://github.com/pickles976/TradeEngine/actions/workflows/build.yaml/badge.svg)
 
 A tiny market engine for matching buy/sell orders. Supports limit orders as well as market orders. Meant to be wrapped in a higher-level API. A larger marketplace could be made by sharding ledgers by item type across multiple machines. 
 
