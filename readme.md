@@ -95,3 +95,4 @@ to_update -- the new state of an order inside the ledger. Occurs when a partial 
 - [x] Fix segfault in query ledger
 - [ ] Add market buy methods
 - [ ] Ability to serialize and deserialize entire market to json or sqlite file to save snapshots of market status
+- [ ] Add automatic npm package upload on successful push/build
