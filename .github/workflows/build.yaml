@@ -1,4 +1,4 @@
-name: Build wasm package
+name: wasm build
 run-name: Build package
 on: [push]
 jobs:
@@ -8,5 +8,5 @@ jobs:
     - uses: actions/checkout@v2
     - name: Build
       run: |
-        cargo test \ 
+        cargo install wasm-pack
         wasm-pack build --target nodejs
