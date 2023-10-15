@@ -121,10 +121,55 @@ fn test_query_ledger_empty() {
 
 }
 
-// #[test]
-// fn test_cancel_order() {
+#[test]
+fn test_cancel_order_fail_no_key() {
 
-// }
+    let order_request_str = "{\"user_id\":\"YOLANDE\",\"item\":\"NITROGEN\",\"amount\":347,\"price_per\":6}";
+
+    let mut exchange = MarketWrapper::new();
+
+    exchange.buy(&order_request_str);
+    exchange.buy(&order_request_str);
+    let summary = exchange.sell(&order_request_str);
+
+    println!("{}", summary);
+
+    let order_string = "{\"id\": \"fd45fe94-883f-498e-b32f-6bbb4bbe8d81\", \"user_id\":\"YOLANDE\",\"kind\":\"SELL\",\"amount\":347,\"price_per\":6}".to_string();
+
+    let cancellation_status = exchange.cancel_order("NITROGEN".to_string(), order_string);
+
+    println!("{}", cancellation_status);
+
+    let test_str = "{ 'status': 'FAILURE', 'reason' : 'Order does not exist' }";
+
+    assert!(WildMatch::new(test_str).matches(cancellation_status.as_str()));
+
+}
+
+#[test]
+fn test_cancel_order_fail_bad_uuid() {
+
+    let order_request_str = "{\"user_id\":\"YOLANDE\",\"item\":\"NITROGEN\",\"amount\":347,\"price_per\":6}";
+
+    let mut exchange = MarketWrapper::new();
+
+    exchange.buy(&order_request_str);
+    exchange.buy(&order_request_str);
+    let summary = exchange.sell(&order_request_str);
+
+    println!("{}", summary);
+
+    let order_string = "{\"id\": \"bad_uuid_string\", \"user_id\":\"YOLANDE\",\"kind\":\"SELL\",\"amount\":347,\"price_per\":6}".to_string();
+
+    let cancellation_status = exchange.cancel_order("NITROGEN".to_string(), order_string);
+
+    println!("{}", cancellation_status);
+
+    let test_str = "{ 'status': 'FAILURE', 'reason' : 'Invalid UUID string' }";
+
+    assert!(WildMatch::new(test_str).matches(cancellation_status.as_str()));
+
+}
 
 // #[test]
 // fn test_get_best_buy_price() {

@@ -43,6 +43,22 @@ impl Order {
             price_per: self.price_per.0 
         }
     }
+
+    pub fn from_json_string(json_str: &str) -> Option<Order> {
+        let data: OrderJSON = serde_json::from_str(&json_str).unwrap_throw();
+
+        // Safely parse UUID
+        match Uuid::try_parse(data.id.as_str()) {
+            Ok(id) => Some(Order{
+                id: id,
+                user_id: data.user_id, 
+                kind: data.kind, 
+                amount: data.amount, 
+                price_per: OrderedFloat(data.price_per)
+            }),
+            Err(_) => None
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize)]

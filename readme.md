@@ -58,6 +58,7 @@ to_update -- the new state of an order inside the ledger. Occurs when a partial 
 ## TODO
 
 - [x] Add query_ledger to wasm
-- [ ] Add cancel_order to wasm
+- [x] Add cancel_order to wasm
+- [x] Add ability to handle invalid UUID to cancel_order
 - [ ] Add get_best_selling_price to wasm
 - [ ] Add get_best_selling_price to wasm

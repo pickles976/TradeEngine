@@ -1,11 +1,10 @@
 use wasm_bindgen::prelude::*;
-use serde::{Serialize, Deserialize};
 
 pub mod market;
 pub mod structs;
 
 use crate::market::{Market, Ledger};
-use crate::structs::{OrderRequest, OrderKind};
+use crate::structs::{OrderRequest, OrderKind, Order};
 
 
 #[wasm_bindgen]
@@ -56,9 +55,19 @@ impl MarketWrapper {
         }
     }
 
-    // pub fn cancel_order(&mut self, item: &str, order: &str) -> String {
-    //     // pass
-    // }
+    pub fn cancel_order(&mut self, item: String, order: String) -> String {
+
+        match Order::from_json_string(&order) {
+            Some(order) => {
+                let result: Option<Order> = self.market.cancel_order(item, order);
+                match result {
+                    Some(_order) => "{ 'status': 'SUCCESS' }".to_string(),
+                    None => "{ 'status': 'FAILURE', 'reason' : 'Order does not exist' }".to_string()
+                }
+            },
+            None => "{ 'status': 'FAILURE', 'reason' : 'Invalid UUID string' }".to_string()
+        }
+    }
 
     // pub fn get_best_buying_price(&mut self, item: &str) -> String {
     //     // pass
