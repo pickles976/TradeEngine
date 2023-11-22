@@ -145,8 +145,11 @@ impl Market {
         market_copy
     }
 
-    pub fn from_json(&mut self, data: String) {
+    pub fn from_json(data: String) -> Market{
         println!("Not implemented!");
+        Market {
+            map: HashMap::new()
+        }
     }
 
 }

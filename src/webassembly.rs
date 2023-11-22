@@ -61,6 +61,12 @@ impl MarketWrapper {
         serde_json::to_string(&result).unwrap()
     }
 
+    pub fn load(data: String) -> MarketWrapper{
+        MarketWrapper {
+            market: Market::from_json(data)
+        }
+    }
+
     pub fn cancel_order(&mut self, item: String, order: String) -> String {
 
         match Order::from_json_string(&order) {
