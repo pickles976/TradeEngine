@@ -170,7 +170,8 @@ fn buy(order: Order, ledger: &mut Ledger, summary: &mut Summary) {
 
             if sell_orders[i].amount < 1 { to_remove.push(i); }
 
-            let transaction = Transaction::new(order.user_id.clone(), sell_orders[i].user_id.clone(), amount, sell_orders[i].price_per);
+            // Buyer sets transaction price
+            let transaction = Transaction::new(order.user_id.clone(), sell_orders[i].user_id.clone(), amount, order.price_per);
             summary.transactions.push(transaction);
             summary.to_update.push(sell_orders[i].clone());
 
@@ -228,7 +229,8 @@ fn sell(order: Order, ledger: &mut Ledger, summary: &mut Summary) {
 
             if buy_orders[i].amount < 1 { to_remove.push(i); }
 
-            let transaction = Transaction::new(order.user_id.clone(), buy_orders[i].user_id.clone(), amount, order.price_per);
+            // Buyer sets price
+            let transaction = Transaction::new(order.user_id.clone(), buy_orders[i].user_id.clone(), amount, buy_orders[i].price_per);
             summary.transactions.push(transaction);
             summary.to_update.push(buy_orders[i].clone());
             

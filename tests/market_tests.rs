@@ -112,10 +112,15 @@ fn test_summary() {
     exchange.place_order(order1);
     let summary = exchange.place_order(order2);
 
-    // println!("{:?}", summary);
+    println!("{:?}", summary);
 
-    let transactions_str = "[Transaction { buyer: \"ALICE\", seller: \"BOB\", amount: 12, price_per: 12.0 }]";
+    // Transaction should be at buyer price
+    let transactions_str = "[Transaction { buyer: \"ALICE\", seller: \"BOB\", amount: 12, price_per: 14.0 }]";
+
+    // Bob's purchase order should be closed out w/ amount=0
     let to_update_str = "[Order { id: *, user_id: \"BOB\", kind: BUY, amount: 0, price_per: OrderedFloat(14.0) }]";
+
+    //Alice's open order will be created with the remainder of the items
     let created_str = "Some(Order { id: *, user_id: \"ALICE\", kind: SELL, amount: 20, price_per: OrderedFloat(12.0) })";
 
     assert_eq!("CORN", summary.key);
