@@ -8,6 +8,7 @@ export function marketwrapper_test_serialization(a: number, b: number, c: number
 export function marketwrapper_buy(a: number, b: number, c: number, d: number): void;
 export function marketwrapper_sell(a: number, b: number, c: number, d: number): void;
 export function marketwrapper_query_ledger(a: number, b: number, c: number, d: number): void;
+export function marketwrapper_dump(a: number, b: number): void;
 export function marketwrapper_cancel_order(a: number, b: number, c: number, d: number, e: number, f: number): void;
 export function marketwrapper_get_best_buying_price(a: number, b: number, c: number, d: number): void;
 export function marketwrapper_get_best_selling_price(a: number, b: number, c: number, d: number): void;

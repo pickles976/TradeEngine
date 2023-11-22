@@ -135,6 +135,20 @@ impl Market {
         }
     }
 
+    pub fn to_json(&self) -> HashMap<String, LedgerJSON> {
+        let mut market_copy = HashMap::new();
+
+        for (key, value) in self.map.clone().into_iter() {
+            market_copy.insert(key, value.clone().to_json());
+        }
+
+        market_copy
+    }
+
+    pub fn from_json(&mut self, data: String) {
+        println!("Not implemented!");
+    }
+
 }
 
 fn buy(order: Order, ledger: &mut Ledger, summary: &mut Summary) {

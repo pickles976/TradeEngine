@@ -1,13 +1,17 @@
-use std::time::Instant;
-use rand::{seq::SliceRandom, Rng}; // 0.7.2
+use rand::{seq::SliceRandom, Rng};
+use std::time::Instant; // 0.7.2
 
-use MarketCore::{self, structs::{OrderRequest, OrderKind}, MarketWrapper};
 use wildmatch::WildMatch;
+use MarketCore::{
+    self,
+    structs::{OrderKind, OrderRequest},
+    MarketWrapper,
+};
 
 #[test]
 fn test_buy() {
-
-    let order_request_str = "{\"user_id\":\"YOLANDE\",\"item\":\"NITROGEN\",\"amount\":347,\"price_per\":6}";
+    let order_request_str =
+        "{\"user_id\":\"YOLANDE\",\"item\":\"NITROGEN\",\"amount\":347,\"price_per\":6}";
 
     let mut exchange = MarketWrapper::new();
 
@@ -18,13 +22,12 @@ fn test_buy() {
     let test_str = "{\"key\":\"NITROGEN\",\"transactions\":[],\"to_update\":[],\"created\":{\"id\":\"*\",\"user_id\":\"YOLANDE\",\"kind\":\"BUY\",\"amount\":347,\"price_per\":6.0}}";
 
     assert!(WildMatch::new(test_str).matches(summary.as_str()));
-
 }
 
 #[test]
 fn test_sell() {
-
-    let order_request_str = "{\"user_id\":\"YOLANDE\",\"item\":\"NITROGEN\",\"amount\":347,\"price_per\":6}";
+    let order_request_str =
+        "{\"user_id\":\"YOLANDE\",\"item\":\"NITROGEN\",\"amount\":347,\"price_per\":6}";
 
     let mut exchange = MarketWrapper::new();
 
@@ -35,13 +38,12 @@ fn test_sell() {
     let test_str = "{\"key\":\"NITROGEN\",\"transactions\":[],\"to_update\":[],\"created\":{\"id\":\"*\",\"user_id\":\"YOLANDE\",\"kind\":\"SELL\",\"amount\":347,\"price_per\":6.0}}";
 
     assert!(WildMatch::new(test_str).matches(summary.as_str()));
-
 }
 
 #[test]
 fn test_buy_and_sell() {
-
-    let order_request_str = "{\"user_id\":\"YOLANDE\",\"item\":\"NITROGEN\",\"amount\":347,\"price_per\":6}";
+    let order_request_str =
+        "{\"user_id\":\"YOLANDE\",\"item\":\"NITROGEN\",\"amount\":347,\"price_per\":6}";
 
     let mut exchange = MarketWrapper::new();
 
@@ -57,8 +59,8 @@ fn test_buy_and_sell() {
 
 #[test]
 fn test_buy_buy_sell() {
-
-    let order_request_str = "{\"user_id\":\"YOLANDE\",\"item\":\"NITROGEN\",\"amount\":347,\"price_per\":6}";
+    let order_request_str =
+        "{\"user_id\":\"YOLANDE\",\"item\":\"NITROGEN\",\"amount\":347,\"price_per\":6}";
 
     let mut exchange = MarketWrapper::new();
 
@@ -75,8 +77,8 @@ fn test_buy_buy_sell() {
 
 #[test]
 fn test_query_ledger() {
-
-    let order_request_str = "{\"user_id\":\"YOLANDE\",\"item\":\"NITROGEN\",\"amount\":347,\"price_per\":6}";
+    let order_request_str =
+        "{\"user_id\":\"YOLANDE\",\"item\":\"NITROGEN\",\"amount\":347,\"price_per\":6}";
 
     let mut exchange = MarketWrapper::new();
 
@@ -94,13 +96,12 @@ fn test_query_ledger() {
     let test_str = "{\"buy_orders\":[{\"id\":\"*\",\"user_id\":\"YOLANDE\",\"kind\":\"BUY\",\"amount\":347,\"price_per\":6.0}],\"sell_orders\":[]}";
 
     assert!(WildMatch::new(test_str).matches(response.as_str()));
-
 }
 
 #[test]
 fn test_query_ledger_empty() {
-
-    let order_request_str = "{\"user_id\":\"YOLANDE\",\"item\":\"NITROGEN\",\"amount\":347,\"price_per\":6}";
+    let order_request_str =
+        "{\"user_id\":\"YOLANDE\",\"item\":\"NITROGEN\",\"amount\":347,\"price_per\":6}";
 
     let mut exchange = MarketWrapper::new();
 
@@ -118,13 +119,12 @@ fn test_query_ledger_empty() {
     let test_str = "{}";
 
     assert!(WildMatch::new(test_str).matches(response.as_str()));
-
 }
 
 #[test]
 fn test_cancel_order_fail_no_key() {
-
-    let order_request_str = "{\"user_id\":\"YOLANDE\",\"item\":\"NITROGEN\",\"amount\":347,\"price_per\":6}";
+    let order_request_str =
+        "{\"user_id\":\"YOLANDE\",\"item\":\"NITROGEN\",\"amount\":347,\"price_per\":6}";
 
     let mut exchange = MarketWrapper::new();
 
@@ -143,13 +143,12 @@ fn test_cancel_order_fail_no_key() {
     let test_str = "{ \"status\": \"FAILURE\", \"reason\" : \"Order does not exist\" }";
 
     assert!(WildMatch::new(test_str).matches(cancellation_status.as_str()));
-
 }
 
 #[test]
 fn test_cancel_order_fail_bad_uuid() {
-
-    let order_request_str = "{\"user_id\":\"YOLANDE\",\"item\":\"NITROGEN\",\"amount\":347,\"price_per\":6}";
+    let order_request_str =
+        "{\"user_id\":\"YOLANDE\",\"item\":\"NITROGEN\",\"amount\":347,\"price_per\":6}";
 
     let mut exchange = MarketWrapper::new();
 
@@ -168,14 +167,14 @@ fn test_cancel_order_fail_bad_uuid() {
     let test_str = "{ \"status\": \"FAILURE\", \"reason\" : \"Invalid UUID string\" }";
 
     assert!(WildMatch::new(test_str).matches(cancellation_status.as_str()));
-
 }
 
 #[test]
 fn test_get_best_buy_price() {
-
-    let order_request_str_1 = "{\"user_id\":\"YOLANDE\",\"item\":\"NITROGEN\",\"amount\":347,\"price_per\":6}";
-    let order_request_str_2 = "{\"user_id\":\"YOLANDE\",\"item\":\"NITROGEN\",\"amount\":347,\"price_per\":8}";
+    let order_request_str_1 =
+        "{\"user_id\":\"YOLANDE\",\"item\":\"NITROGEN\",\"amount\":347,\"price_per\":6}";
+    let order_request_str_2 =
+        "{\"user_id\":\"YOLANDE\",\"item\":\"NITROGEN\",\"amount\":347,\"price_per\":8}";
 
     let mut exchange = MarketWrapper::new();
 
@@ -184,7 +183,8 @@ fn test_get_best_buy_price() {
 
     println!("{}", exchange.query_ledger("NITROGEN".to_string()));
 
-    let test_str = "{\"id\":\"*\",\"user_id\":\"YOLANDE\",\"kind\":\"BUY\",\"amount\":347,\"price_per\":8.0}";
+    let test_str =
+        "{\"id\":\"*\",\"user_id\":\"YOLANDE\",\"kind\":\"BUY\",\"amount\":347,\"price_per\":8.0}";
 
     println!("{}", test_str);
 
@@ -193,14 +193,14 @@ fn test_get_best_buy_price() {
     println!("{}", best_order);
 
     assert!(WildMatch::new(test_str).matches(best_order.as_str()));
-
 }
 
 #[test]
 fn test_get_best_sell_price() {
-
-    let order_request_str_1 = "{\"user_id\":\"YOLANDE\",\"item\":\"NITROGEN\",\"amount\":347,\"price_per\":6}";
-    let order_request_str_2 = "{\"user_id\":\"YOLANDE\",\"item\":\"NITROGEN\",\"amount\":347,\"price_per\":8}";
+    let order_request_str_1 =
+        "{\"user_id\":\"YOLANDE\",\"item\":\"NITROGEN\",\"amount\":347,\"price_per\":6}";
+    let order_request_str_2 =
+        "{\"user_id\":\"YOLANDE\",\"item\":\"NITROGEN\",\"amount\":347,\"price_per\":8}";
 
     let mut exchange = MarketWrapper::new();
 
@@ -209,7 +209,8 @@ fn test_get_best_sell_price() {
 
     println!("{}", exchange.query_ledger("NITROGEN".to_string()));
 
-    let test_str = "{\"id\":\"*\",\"user_id\":\"YOLANDE\",\"kind\":\"SELL\",\"amount\":347,\"price_per\":6.0}";
+    let test_str =
+        "{\"id\":\"*\",\"user_id\":\"YOLANDE\",\"kind\":\"SELL\",\"amount\":347,\"price_per\":6.0}";
 
     println!("{}", test_str);
 
@@ -218,5 +219,26 @@ fn test_get_best_sell_price() {
     println!("{}", best_order);
 
     assert!(WildMatch::new(test_str).matches(best_order.as_str()));
+}
 
+#[test]
+fn test_dump_market() {
+    let buy_request_str =
+        "{\"user_id\":\"YOLANDE\",\"item\":\"NITROGEN\",\"amount\":347,\"price_per\":6}";
+
+    let sell_request_str =
+        "{\"user_id\":\"YOLANDE\",\"item\":\"WEED\",\"amount\":347,\"price_per\":6}";
+
+    let mut exchange = MarketWrapper::new();
+
+    exchange.buy(&buy_request_str);
+    exchange.buy(&buy_request_str);
+    exchange.sell(&sell_request_str);
+
+    let response = exchange.dump();
+    println!("{}", response);
+
+    let test_str: &str = "{\"NITROGEN\":{\"buy_orders\":[{\"id\":\"*\",\"user_id\":\"YOLANDE\",\"kind\":\"BUY\",\"amount\":347,\"price_per\":6.0},{\"id\":\"*\",\"user_id\":\"YOLANDE\",\"kind\":\"BUY\",\"amount\":347,\"price_per\":6.0}],\"sell_orders\":[]},\"WEED\":{\"buy_orders\":[],\"sell_orders\":[{\"id\":\"*\",\"user_id\":\"YOLANDE\",\"kind\":\"SELL\",\"amount\":347,\"price_per\":6.0}]}}";
+
+    assert!(WildMatch::new(test_str).matches(response.as_str()));
 }

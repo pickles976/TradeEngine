@@ -37,6 +37,10 @@ export class MarketWrapper {
 */
   query_ledger(item: string): string;
 /**
+* @returns {string}
+*/
+  dump(): string;
+/**
 * @param {string} item
 * @param {string} order
 * @returns {string}

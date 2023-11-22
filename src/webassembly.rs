@@ -1,9 +1,10 @@
 use wasm_bindgen::prelude::*;
+use std::collections::HashMap;
 
 pub mod market;
 pub mod structs;
 
-use crate::market::{Market, Ledger};
+use crate::market::{Market, Ledger, LedgerJSON};
 use crate::structs::{OrderRequest, OrderKind, Order};
 
 
@@ -53,6 +54,11 @@ impl MarketWrapper {
             Some(ledger_copy) => serde_json::to_string(&ledger_copy.to_json()).unwrap(),
             None => return "{}".to_string()
         }
+    }
+
+    pub fn dump(&mut self) -> String {
+        let result: HashMap<String, LedgerJSON> = self.market.to_json();
+        serde_json::to_string(&result).unwrap()
     }
 
     pub fn cancel_order(&mut self, item: String, order: String) -> String {
