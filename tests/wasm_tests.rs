@@ -223,32 +223,34 @@ fn test_get_best_sell_price() {
 
 #[test]
 fn test_dump_market() {
+    // Test Buy
     let buy_request_str =
         "{\"user_id\":\"YOLANDE\",\"item\":\"NITROGEN\",\"amount\":347,\"price_per\":6}";
 
+    let mut exchange = MarketWrapper::new();
+    exchange.buy(&buy_request_str);
+    exchange.buy(&buy_request_str);
+
+    let response = exchange.dump();
+    let test_str: &str = "{\"NITROGEN\":{\"buy_orders\":[{\"id\":\"*\",\"user_id\":\"YOLANDE\",\"kind\":\"BUY\",\"amount\":347,\"price_per\":6.0},{\"id\":\"*\",\"user_id\":\"YOLANDE\",\"kind\":\"BUY\",\"amount\":347,\"price_per\":6.0}],\"sell_orders\":[]}}";
+    assert!(WildMatch::new(test_str).matches(response.as_str()));
+
+    // Test Sell
+    let mut exchange = MarketWrapper::new();
     let sell_request_str =
         "{\"user_id\":\"YOLANDE\",\"item\":\"WEED\",\"amount\":347,\"price_per\":6}";
-
-    let mut exchange = MarketWrapper::new();
-
-    exchange.buy(&buy_request_str);
-    exchange.buy(&buy_request_str);
     exchange.sell(&sell_request_str);
 
     let response = exchange.dump();
-    println!("{}", response);
-
-    let test_str: &str = "{\"NITROGEN\":{\"buy_orders\":[{\"id\":\"*\",\"user_id\":\"YOLANDE\",\"kind\":\"BUY\",\"amount\":347,\"price_per\":6.0},{\"id\":\"*\",\"user_id\":\"YOLANDE\",\"kind\":\"BUY\",\"amount\":347,\"price_per\":6.0}],\"sell_orders\":[]},\"WEED\":{\"buy_orders\":[],\"sell_orders\":[{\"id\":\"*\",\"user_id\":\"YOLANDE\",\"kind\":\"SELL\",\"amount\":347,\"price_per\":6.0}]}}";
-
+    let test_str: &str = "{\"WEED\":{\"buy_orders\":[],\"sell_orders\":[{\"id\":\"*\",\"user_id\":\"YOLANDE\",\"kind\":\"SELL\",\"amount\":347,\"price_per\":6.0}]}}";
     assert!(WildMatch::new(test_str).matches(response.as_str()));
 }
 
 #[test]
 fn test_load_market() {
-
     let market_string: &str = "{\"NITROGEN\":{\"buy_orders\":[{\"id\":\"38e7b46b-ae36-43f9-aa14-cf776625b58c\",\"user_id\":\"YOLANDE\",\"kind\":\"BUY\",\"amount\":347,\"price_per\":6.0},{\"id\":\"*\",\"user_id\":\"YOLANDE\",\"kind\":\"BUY\",\"amount\":347,\"price_per\":6.0}],\"sell_orders\":[]},\"WEED\":{\"buy_orders\":[],\"sell_orders\":[{\"id\":\"38e7b46b-ae36-43f9-aa14-cf776625b58c\",\"user_id\":\"YOLANDE\",\"kind\":\"SELL\",\"amount\":347,\"price_per\":6.0}]}}";
     let mut exchange = MarketWrapper::load(market_string.to_string());
-    
+
     let query_str = "NITROGEN".to_string();
     let response = exchange.query_ledger(query_str);
     let test_str = "{\"buy_orders\":[{\"id\":\"38e7b46b-ae36-43f9-aa14-cf776625b58c\",\"user_id\":\"YOLANDE\",\"kind\":\"BUY\",\"amount\":347,\"price_per\":6.0}],\"sell_orders\":[]}";
