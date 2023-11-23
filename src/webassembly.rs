@@ -62,8 +62,9 @@ impl MarketWrapper {
     }
 
     pub fn load(data: String) -> MarketWrapper{
+        let result: HashMap<String, LedgerJSON> = serde_json::from_str(&data).unwrap();
         MarketWrapper {
-            market: Market::from_json(data)
+            market: Market::from_json(result)
         }
     }
 

@@ -246,15 +246,16 @@ fn test_dump_market() {
 #[test]
 fn test_load_market() {
 
-    let market_string: &str = "{\"NITROGEN\":{\"buy_orders\":[{\"id\":\"*\",\"user_id\":\"YOLANDE\",\"kind\":\"BUY\",\"amount\":347,\"price_per\":6.0},{\"id\":\"*\",\"user_id\":\"YOLANDE\",\"kind\":\"BUY\",\"amount\":347,\"price_per\":6.0}],\"sell_orders\":[]},\"WEED\":{\"buy_orders\":[],\"sell_orders\":[{\"id\":\"*\",\"user_id\":\"YOLANDE\",\"kind\":\"SELL\",\"amount\":347,\"price_per\":6.0}]}}";
+    let market_string: &str = "{\"NITROGEN\":{\"buy_orders\":[{\"id\":\"38e7b46b-ae36-43f9-aa14-cf776625b58c\",\"user_id\":\"YOLANDE\",\"kind\":\"BUY\",\"amount\":347,\"price_per\":6.0},{\"id\":\"*\",\"user_id\":\"YOLANDE\",\"kind\":\"BUY\",\"amount\":347,\"price_per\":6.0}],\"sell_orders\":[]},\"WEED\":{\"buy_orders\":[],\"sell_orders\":[{\"id\":\"38e7b46b-ae36-43f9-aa14-cf776625b58c\",\"user_id\":\"YOLANDE\",\"kind\":\"SELL\",\"amount\":347,\"price_per\":6.0}]}}";
     let mut exchange = MarketWrapper::load(market_string.to_string());
     
     let query_str = "NITROGEN".to_string();
     let response = exchange.query_ledger(query_str);
+    let test_str = "{\"buy_orders\":[{\"id\":\"38e7b46b-ae36-43f9-aa14-cf776625b58c\",\"user_id\":\"YOLANDE\",\"kind\":\"BUY\",\"amount\":347,\"price_per\":6.0}],\"sell_orders\":[]}";
+    assert!(WildMatch::new(test_str).matches(response.as_str()));
 
-    println!("{}", response);
-
-    let test_str = "{\"buy_orders\":[{\"id\":\"*\",\"user_id\":\"YOLANDE\",\"kind\":\"BUY\",\"amount\":347,\"price_per\":6.0}],\"sell_orders\":[]}";
-
+    let query_str = "WEED".to_string();
+    let response = exchange.query_ledger(query_str);
+    let test_str = "{\"buy_orders\":[],\"sell_orders\":[{\"id\":\"38e7b46b-ae36-43f9-aa14-cf776625b58c\",\"user_id\":\"YOLANDE\",\"kind\":\"SELL\",\"amount\":347,\"price_per\":6.0}]}";
     assert!(WildMatch::new(test_str).matches(response.as_str()));
 }
