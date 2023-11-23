@@ -267,6 +267,16 @@ class MarketWrapper {
         }
     }
     /**
+    * @param {string} data
+    * @returns {MarketWrapper}
+    */
+    static load(data) {
+        const ptr0 = passStringToWasm0(data, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.marketwrapper_load(ptr0, len0);
+        return MarketWrapper.__wrap(ret);
+    }
+    /**
     * @param {string} item
     * @param {string} order
     * @returns {string}

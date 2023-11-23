@@ -41,6 +41,11 @@ export class MarketWrapper {
 */
   dump(): string;
 /**
+* @param {string} data
+* @returns {MarketWrapper}
+*/
+  static load(data: string): MarketWrapper;
+/**
 * @param {string} item
 * @param {string} order
 * @returns {string}
